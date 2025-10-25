@@ -1,4 +1,4 @@
-// StationManagement.js - Station Management with Full Interactive Map
+// StationManagement.js - Station Management with Interactive Map
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
@@ -14,10 +14,9 @@ const StationManagement = ({ onUpdate }) => {
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [viewMode, setViewMode] = useState('map'); // 'map' or 'table'
+  const [viewMode, setViewMode] = useState('map');
   const [addMode, setAddMode] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
   const [formData, setFormData] = useState({
     nom: '',
     type: 'StationBus',
@@ -25,6 +24,7 @@ const StationManagement = ({ onUpdate }) => {
     longitude: ''
   });
   const [editingStation, setEditingStation] = useState(null);
+  const [mapReady, setMapReady] = useState(false);
   
   const mapContainer = useRef(null);
   const map = useRef(null);
@@ -39,33 +39,6 @@ const StationManagement = ({ onUpdate }) => {
       case 'Parking': return '🅿️';
       default: return '📍';
     }
-  }, []);
-
-  const handleMapClick = useCallback((lng, lat) => {
-    // Remove temporary marker if exists
-    if (tempMarker.current) {
-      tempMarker.current.remove();
-    }
-
-    // Add temporary marker
-    const el = document.createElement('div');
-    el.className = 'temp-station-marker';
-    el.innerHTML = '📍';
-    el.style.fontSize = '40px';
-
-    tempMarker.current = new mapboxgl.Marker(el)
-      .setLngLat([lng, lat])
-      .addTo(map.current);
-
-    // Set location and show modal
-    setSelectedLocation({ lng, lat });
-    setFormData(prev => ({
-      ...prev,
-      latitude: lat.toFixed(6),
-      longitude: lng.toFixed(6)
-    }));
-    setShowModal(true);
-    setAddMode(false);
   }, []);
 
   const loadStations = useCallback(async () => {
@@ -84,90 +57,93 @@ const StationManagement = ({ onUpdate }) => {
     loadStations();
   }, [loadStations]);
 
-  // Initialize map when container is ready and in map view
+  // Initialize map once on mount
   useEffect(() => {
-    if (viewMode !== 'map') return;
-    if (map.current) return; // Already initialized
-    if (!mapContainer.current) return; // Container not ready
+    if (!mapContainer.current || map.current) return;
     
     if (!MAPBOX_TOKEN) {
       console.error('Mapbox token is not set');
       return;
     }
 
-    console.log('🗺️ Initializing map...');
-    
-    try {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: [10.1815, 36.8065], // Tunis
-        zoom: 11
-      });
+    const timer = setTimeout(() => {
+      if (!mapContainer.current) return;
 
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      try {
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: [10.1815, 36.8065],
+          zoom: 11
+        });
 
-      // Add geocoder (search box)
-      const geocoder = new MapboxGeocoder({
-        accessToken: mapboxgl.accessToken,
-        mapboxgl: mapboxgl,
-        marker: false,
-        placeholder: 'Search for a location...'
-      });
-      
-      map.current.addControl(geocoder, 'top-left');
+        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-      // Handle map click for adding stations
-      map.current.on('click', (e) => {
-        if (addModeRef.current) {
-          const { lng, lat } = e.lngLat;
-          handleMapClick(lng, lat);
-        }
-      });
+        const geocoder = new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl,
+          marker: false,
+          placeholder: 'Search for a location...'
+        });
+        
+        map.current.addControl(geocoder, 'top-left');
 
-      // Mark map as loaded
-      map.current.on('load', () => {
-        console.log('✅ Map loaded successfully!');
-        setMapLoaded(true);
-      });
-    } catch (error) {
-      console.error('Error initializing map:', error);
-    }
+        map.current.on('click', (e) => {
+          if (addModeRef.current) {
+            const { lng, lat } = e.lngLat;
+            
+            if (tempMarker.current) {
+              tempMarker.current.remove();
+            }
 
-    // Cleanup when switching away from map view
+            const el = document.createElement('div');
+            el.className = 'temp-station-marker';
+            el.innerHTML = '📍';
+            el.style.fontSize = '40px';
+
+            tempMarker.current = new mapboxgl.Marker(el)
+              .setLngLat([lng, lat])
+              .addTo(map.current);
+
+            setSelectedLocation({ lng, lat });
+            setFormData(prev => ({
+              ...prev,
+              latitude: lat.toFixed(6),
+              longitude: lng.toFixed(6)
+            }));
+            setShowModal(true);
+            setAddMode(false);
+            addModeRef.current = false;
+          }
+        });
+
+        map.current.on('load', () => {
+          setMapReady(true);
+          map.current.resize();
+        });
+
+      } catch (error) {
+        console.error('Error initializing map:', error);
+      }
+    }, 100);
+
     return () => {
-      if (viewMode !== 'map' && map.current) {
-        console.log('🧹 Cleaning up map...');
+      clearTimeout(timer);
+      if (map.current) {
         map.current.remove();
         map.current = null;
-        setMapLoaded(false);
       }
+      setMapReady(false);
     };
-  }, [handleMapClick, viewMode]);
+  }, []);
 
-  // Resize map when switching to map view
+  // Update markers
   useEffect(() => {
-    console.log('📏 Resize effect triggered - viewMode:', viewMode, 'mapLoaded:', mapLoaded);
-    if (viewMode === 'map' && map.current && mapLoaded) {
-      console.log('↔️ Resizing map...');
-      // Small delay to ensure the container is visible
-      setTimeout(() => {
-        map.current.resize();
-        console.log('✅ Map resized');
-      }, 100);
-    }
-  }, [viewMode, mapLoaded]);
-
-  // Update markers when stations change or map loads
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+    if (!map.current || !mapReady) return;
     
-    // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
-    // Add markers for each station
     stations.forEach(station => {
       if (station.latitude && station.longitude) {
         const el = document.createElement('div');
@@ -207,7 +183,18 @@ const StationManagement = ({ onUpdate }) => {
         markers.current.push(marker);
       }
     });
-  }, [stations, getStationIcon, mapLoaded]);
+  }, [stations, getStationIcon, mapReady]);
+
+  // Resize map when view changes
+  useEffect(() => {
+    if (viewMode === 'map' && map.current && mapReady) {
+      setTimeout(() => {
+        if (map.current) {
+          map.current.resize();
+        }
+      }, 100);
+    }
+  }, [viewMode, mapReady]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -215,7 +202,7 @@ const StationManagement = ({ onUpdate }) => {
 
     try {
       const endpoint = editingStation 
-        ? `${API_URL}/stations/${editingStation.id}` 
+        ? `${API_URL}/stations/${editingStation.id}`
         : `${API_URL}/stations`;
       
       const method = editingStation ? 'PUT' : 'POST';
@@ -233,7 +220,6 @@ const StationManagement = ({ onUpdate }) => {
         })
       });
 
-
       const data = await response.json();
 
       if (data.success || response.ok) {
@@ -250,7 +236,7 @@ const StationManagement = ({ onUpdate }) => {
     setLoading(false);
   };
 
-  const handleDelete = async (stationId) => {
+  const handleDelete = useCallback(async (stationId) => {
     if (window.confirm('Are you sure you want to delete this station?')) {
       try {
         const response = await fetch(`${API_URL}/stations/${stationId}`, {
@@ -270,29 +256,7 @@ const StationManagement = ({ onUpdate }) => {
         alert('Error deleting station');
       }
     }
-  };
-
-  // Reserved for future use - currently using window.editStation
-  // const openModal = (station = null) => {
-  //   if (station) {
-  //     setEditingStation(station);
-  //     setFormData({
-  //       nom: station.nom,
-  //       type: station.type,
-  //       latitude: station.latitude || '',
-  //       longitude: station.longitude || ''
-  //     });
-  //   } else {
-  //     setEditingStation(null);
-  //     setFormData({
-  //       nom: '',
-  //       type: 'StationBus',
-  //       latitude: '',
-  //       longitude: ''
-  //     });
-  //   }
-  //   setShowModal(true);
-  // };
+  }, [loadStations, onUpdate]);
 
   const closeModal = () => {
     setShowModal(false);
@@ -330,7 +294,6 @@ const StationManagement = ({ onUpdate }) => {
     }
   };
 
-  // Expose functions to window for popup buttons
   useEffect(() => {
     window.editStation = (stationId) => {
       const station = stations.find(s => s.id === stationId);
@@ -354,8 +317,7 @@ const StationManagement = ({ onUpdate }) => {
       delete window.editStation;
       delete window.deleteStation;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stations]);
+  }, [stations, handleDelete]);
 
   if (loading && stations.length === 0) {
     return <div className="loading">Loading stations...</div>;
@@ -397,22 +359,25 @@ const StationManagement = ({ onUpdate }) => {
         </div>
       </div>
 
-      {/* Map View - Only render when in map mode */}
-      {viewMode === 'map' && (
-        <div style={{
+      <div 
+        style={{
           marginTop: '20px',
-          position: 'relative',
           borderRadius: '16px',
           overflow: 'hidden',
           boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          height: '600px'
-        }}>
-          <div 
-            ref={mapContainer} 
-            style={{width: '100%', height: '100%'}}
-          />
-          
-          {/* Station count badge */}
+          height: '600px',
+          width: '100%',
+          visibility: viewMode === 'map' ? 'visible' : 'hidden',
+          position: viewMode === 'map' ? 'relative' : 'absolute',
+          zIndex: viewMode === 'map' ? 1 : -1
+        }}
+      >
+        <div 
+          ref={mapContainer} 
+          style={{width: '100%', height: '100%'}}
+        />
+        
+        {viewMode === 'map' && (
           <div style={{
             position: 'absolute',
             bottom: '20px',
@@ -427,10 +392,9 @@ const StationManagement = ({ onUpdate }) => {
           }}>
             📍 {stations.length} Station{stations.length !== 1 ? 's' : ''}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Table view */}
       {viewMode === 'table' && (
         <div style={{marginTop: '20px'}}>
           {stations.length === 0 ? (
@@ -470,7 +434,7 @@ const StationManagement = ({ onUpdate }) => {
                         className="btn btn-danger"
                         onClick={() => window.deleteStation(station.id)}
                       >
-                        🗑️ Delete
+                        ��️ Delete
                       </button>
                     </td>
                   </tr>
@@ -480,7 +444,6 @@ const StationManagement = ({ onUpdate }) => {
           )}
         </div>
       )}
-
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
@@ -495,7 +458,7 @@ const StationManagement = ({ onUpdate }) => {
                 fontSize: '14px',
                 color: '#0369a1'
               }}>
-                📍 Location selected: {formData.latitude}, {formData.longitude}
+                �� Location selected: {formData.latitude}, {formData.longitude}
               </div>
             )}
             <form onSubmit={handleSubmit}>

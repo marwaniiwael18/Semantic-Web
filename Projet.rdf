@@ -6,172 +6,40 @@
    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
    xmlns:smartcity="http://example.org/smartcity#"
 >
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Citoyen">
+  <rdf:Description rdf:about="http://example.org/smartcity#Horaire">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Utilisateur"/>
-    <owl:disjointWith rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Touriste"/>
   </rdf:Description>
-  <rdf:Description rdf:nodeID="Nbacb2d7928674413893e0bd218f51267">
-    <rdf:first rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
-    <rdf:rest rdf:nodeID="Nfbeba3896eda4cd2aa0f65a107bbe4cc"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="N454cd697c4d342408fc9d241d1b44bb0">
-    <rdf:first rdf:resource="http://example.org/smartcity#Energie"/>
-    <rdf:rest rdf:nodeID="N39e20700db12434c8d87528cd74e80a9"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="N0f5fab01814b4c6e9346e95f64721340">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
-    <owl:onProperty rdf:resource="http://example.org/smartcity#mesure"/>
-    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
-    <owl:onClass rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#CarteAbonnement">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Utilisateur"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#VitesseMax">
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Immatriculation">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
     <rdfs:domain rdf:resource="http://example.org/smartcity#Transport"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Email">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Utilisateur"/>
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#estUtilisePar">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Transport"/>
-    <rdfs:range rdf:resource="http://example.org/smartcity#Utilisateur"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#aTicket">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Utilisateur"/>
-    <rdfs:range rdf:resource="http://example.org/smartcity#Ticket"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#impacte">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
-    <rdfs:range rdf:resource="http://example.org/smartcity#Trajet"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="N76191df99d18473ca2aa3b0b41c8b314">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
-    <owl:onProperty rdf:resource="http://example.org/smartcity#aTicket"/>
-    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
-    <owl:onClass rdf:resource="http://example.org/smartcity#Ticket"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Station_3">
-    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#StationBus"/>
-    <ont:aNomStation>Testt</ont:aNomStation>
-    <ont:aLatitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">36.841609</ont:aLatitude>
-    <ont:aLongitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">10.173057</ont:aLongitude>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#Transport">
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#AbonnementMensuel">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <owl:equivalentClass rdf:nodeID="Nb137b9b9b60b4b3a9cec985566d2c7c1"/>
-    <owl:equivalentClass rdf:nodeID="N8421196459b34fccbb892cdd84c21442"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Ticket"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aDistance">
+  <rdf:Description rdf:nodeID="N4dc23e87719c40ae841de3a2cf985bc9">
+    <rdf:first rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+    <rdf:rest rdf:nodeID="Nb2bb1815ca83429cada07a330a02da55"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Trottinette_2">
+    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Trottinette"/>
+    <ont:Nom>bus1</ont:Nom>
+    <ont:Capacite rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">32</ont:Capacite>
+    <ont:Immatriculation>bus 324 ewq</ont:Immatriculation>
+    <ont:VitesseMax rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">90</ont:VitesseMax>
+    <ont:estElectrique rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ont:estElectrique>
+    <ont:ImageURL>https://res.cloudinary.com/duluvuhp4/image/upload/v1761408919/smart_city_stations/station_Trottinette_2.jpg</ont:ImageURL>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/smartcity#EvenementDeCirculation">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <owl:equivalentClass rdf:nodeID="Nc50fcbf087dc43b3a9748917e1fd2f67"/>
+    <owl:equivalentClass rdf:nodeID="Ne4c1b5073b9a4aa1a84ff4c7b5cff394"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aDateEmission">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Trajet"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Age">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Utilisateur"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Hybride">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Energie"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Eléctreique_1">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
-    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Électrique"/>
-    <ont:Nom>Electrique</ont:Nom>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Utilisateur_2">
-    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Citoyen"/>
-    <ont:Nom>wael</ont:Nom>
-    <ont:Email>wael.marwani@esprit.tn</ont:Email>
-    <ont:MotDePasse>211JMT6434</ont:MotDePasse>
-    <ont:Age rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">43</ont:Age>
-    <ont:ImageURL>https://res.cloudinary.com/duluvuhp4/image/upload/v1761403218/smart_city_profiles/user_Utilisateur_2.jpg</ont:ImageURL>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#arriveA">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Trajet"/>
-    <rdfs:range rdf:resource="http://example.org/smartcity#Station"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#partDe">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Trajet"/>
-    <rdfs:range rdf:resource="http://example.org/smartcity#Station"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#estElectrique">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Transport"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#Utilisateur">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <owl:equivalentClass rdf:nodeID="N76191df99d18473ca2aa3b0b41c8b314"/>
-    <owl:equivalentClass rdf:nodeID="Nc7c4faf21f4e4d32abdc8436ee307f63"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Ticket_1">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
-    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#TicketSimple"/>
-    <ont:aDateEmission rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2025-09-27T08:00:00</ont:aDateEmission>
-    <ont:aPrixTicket rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1.2</ont:aPrixTicket>
-    <ont:aValide rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ont:aValide>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Vélo">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Transport"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#aHoraire">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Transport"/>
-    <rdfs:range rdf:resource="http://example.org/smartcity#Horaire"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#connecteA">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Station"/>
-    <rdfs:range rdf:resource="http://example.org/smartcity#Station"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#organiseDans">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
-    <rdfs:range rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Banlieue">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#ZoneIndustrielle">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aDateEvenement">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Ticket"/>
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#dateTime"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="Nc7c4faf21f4e4d32abdc8436ee307f63">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
-    <owl:onProperty rdf:resource="http://example.org/smartcity#utiliseTransport"/>
-    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
-    <owl:onClass rdf:resource="http://example.org/smartcity#Transport"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aDuree">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Trajet"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Utilisateur_1">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
@@ -182,199 +50,82 @@
     <ont:Nom>Ali</ont:Nom>
     <ont:MotDePasse>ali123</ont:MotDePasse>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Accident">
+  <rdf:Description rdf:about="http://example.org/smartcity#impacte">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+    <rdfs:range rdf:resource="http://example.org/smartcity#Trajet"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Trafic">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Capteur"/>
   </rdf:Description>
-  <rdf:Description rdf:nodeID="N7d191ab6f7f7412596476de4d1cc72a7">
-    <rdf:first rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Bus"/>
-    <rdf:rest rdf:nodeID="Nd22b90c9185a4f53aa6e29dd8174437b"/>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Accident_2">
+    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Accident"/>
+    <ont:Nom>eqeqwe</ont:Nom>
+    <ont:aDescription>qewqe</ont:aDescription>
+    <ont:aGravite rdf:datatype="http://www.w3.org/2001/XMLSchema#int">3</ont:aGravite>
+    <ont:aDateEvenement rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2025-10-25T00:00:00</ont:aDateEvenement>
+    <ont:imageUrl>https://res.cloudinary.com/duluvuhp4/image/upload/v1761408999/smart_city_stations/station_Accident_2.jpg</ont:imageUrl>
   </rdf:Description>
-  <rdf:Description rdf:nodeID="N196edfc6d02849b5a4ac9f443ddb69ab">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
-    <owl:onProperty rdf:resource="http://example.org/smartcity#aHoraire"/>
-    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
-    <owl:onClass rdf:resource="http://example.org/smartcity#Horaire"/>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Station_2">
+    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#StationMétro"/>
+    <ont:aNomStation>metroo</ont:aNomStation>
+    <ont:aLatitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">36.848282</ont:aLatitude>
+    <ont:aLongitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">10.233318</ont:aLongitude>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Électrique">
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Hybride">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
     <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Energie"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aGravite">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aDescription">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="Naa9f66b425d6472da4a0f678aa20661b">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
-    <owl:onProperty rdf:resource="http://example.org/smartcity#arriveA"/>
-    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
-    <owl:onClass rdf:resource="http://example.org/smartcity#Station"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Trajet_1">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
-    <rdf:type rdf:resource="http://example.org/smartcity#Trajet"/>
-    <ont:Nom>TrajetCentreVille</ont:Nom>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#EvenementDeCirculation">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <owl:equivalentClass rdf:nodeID="Nbef5c865212a494089f9cd251e3ba887"/>
-    <owl:equivalentClass rdf:nodeID="Ned714819855c4f279dcef1d15ca173b7"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#VoiturePartagée">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Transport"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="Na33eb2dbcedf4baebc2a96d864b41d25">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Ontology"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aValide">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Ticket"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="Nd248233aaba04bbfb17dacf5639b1882">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
-    <owl:onProperty rdf:resource="http://example.org/smartcity#aHoraire"/>
-    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
-    <owl:onClass rdf:resource="http://example.org/smartcity#Horaire"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#utiliseTransport">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <owl:inverseOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#estUtilisePar"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Utilisateur"/>
-    <rdfs:range rdf:resource="http://example.org/smartcity#Transport"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Bus">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <owl:equivalentClass rdf:nodeID="Nd248233aaba04bbfb17dacf5639b1882"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Transport"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aNomStation">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Station"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  <rdf:Description rdf:nodeID="N190d816c024141378ac17ede048d267e">
+    <rdf:first rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
+    <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Capacite">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
     <rdfs:domain rdf:resource="http://example.org/smartcity#Transport"/>
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#StationBus">
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Touriste">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Station"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Utilisateur"/>
   </rdf:Description>
-  <rdf:Description rdf:nodeID="Nb137b9b9b60b4b3a9cec985566d2c7c1">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
-    <owl:onProperty rdf:resource="http://example.org/smartcity#alimentePar"/>
-    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
-    <owl:onClass rdf:resource="http://example.org/smartcity#Energie"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aDateEmission">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Ticket"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#dateTime"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="Nfa0247ff3b5747bd9f932a8727c9339b">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
-    <owl:onProperty rdf:resource="http://example.org/smartcity#partDe"/>
-    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
-    <owl:onClass rdf:resource="http://example.org/smartcity#Station"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="Nbef5c865212a494089f9cd251e3ba887">
+  <rdf:Description rdf:nodeID="Nc50fcbf087dc43b3a9748917e1fd2f67">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
     <owl:onProperty rdf:resource="http://example.org/smartcity#impacte"/>
     <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
     <owl:onClass rdf:resource="http://example.org/smartcity#Trajet"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#Capteur">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <owl:equivalentClass rdf:nodeID="N0f5fab01814b4c6e9346e95f64721340"/>
+  <rdf:Description rdf:nodeID="Nc1e3fad0362e46b19c0eb3220ac2225d">
+    <rdf:first rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Vélo"/>
+    <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#Trajet">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <owl:equivalentClass rdf:nodeID="Naa9f66b425d6472da4a0f678aa20661b"/>
-    <owl:equivalentClass rdf:nodeID="Nfa0247ff3b5747bd9f932a8727c9339b"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aLatitude">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Station"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="Nfbeba3896eda4cd2aa0f65a107bbe4cc">
-    <rdf:first rdf:resource="http://example.org/smartcity#Station"/>
-    <rdf:rest rdf:nodeID="N394524d2023c486eb56280f1881380fe"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Station_4">
-    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Parking"/>
-    <ont:aNomStation>Testt1231</ont:aNomStation>
-    <ont:aLatitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">36.846395</ont:aLatitude>
-    <ont:aLongitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">10.189315</ont:aLongitude>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#mesure">
+  <rdf:Description rdf:about="http://example.org/smartcity#arriveA">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Capteur"/>
-    <rdfs:range rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Trajet"/>
+    <rdfs:range rdf:resource="http://example.org/smartcity#Station"/>
   </rdf:Description>
-  <rdf:Description rdf:nodeID="N818934ea09b5488aa86d37b560f47ccc">
-    <rdf:first rdf:resource="http://www.co-ode.org/ontologies/ont.owl#VoiturePartagée"/>
-    <rdf:rest rdf:nodeID="N1696d0f6e17745b4a2bc389f0f5282d7"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="Nd22b90c9185a4f53aa6e29dd8174437b">
-    <rdf:first rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Métro"/>
-    <rdf:rest rdf:nodeID="N01119a34157c40a997bd625a5d8917c7"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#Energie">
+  <rdf:Description rdf:about="http://example.org/smartcity#Transport">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <owl:equivalentClass rdf:nodeID="N059a54cd32ee417e9f32ccea4662004b"/>
+    <owl:equivalentClass rdf:nodeID="N2c886755108144dc8227e58f16d97a2c"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Station_1">
-    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#StationBus"/>
-    <ont:aNomStation>eweqweq</ont:aNomStation>
-    <ont:aLatitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">36.822826</ont:aLatitude>
-    <ont:aLongitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">10.17115</ont:aLongitude>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="N8421196459b34fccbb892cdd84c21442">
+  <rdf:Description rdf:nodeID="Ne4c1b5073b9a4aa1a84ff4c7b5cff394">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
-    <owl:onProperty rdf:resource="http://example.org/smartcity#circuleDans"/>
+    <owl:onProperty rdf:resource="http://example.org/smartcity#organiseDans"/>
     <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
     <owl:onClass rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Accident_1">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
-    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Accident"/>
-    <smartcity:impacte rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Trajet_1"/>
-    <ont:Nom>AccidentXn</ont:Nom>
-    <ont:aDateEvenement rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2025-09-27T00:00:00</ont:aDateEvenement>
-    <ont:aDescription>fsdfsdf</ont:aDescription>
-    <ont:aGravite rdf:datatype="http://www.w3.org/2001/XMLSchema#int">3</ont:aGravite>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Métro">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <owl:equivalentClass rdf:nodeID="N196edfc6d02849b5a4ac9f443ddb69ab"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Transport"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aPrixTicket">
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Age">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Ticket"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Utilisateur"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aLongitude">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Station"/>
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="N1448169a462b40deaab918e981a17e8a">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
-    <owl:members rdf:nodeID="N7d191ab6f7f7412596476de4d1cc72a7"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="N69efdac95c484fbf8bbfcea904762518">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
-    <owl:members rdf:nodeID="N454cd697c4d342408fc9d241d1b44bb0"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#CentreVille">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://example.org/smartcity#alimentePar">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
@@ -382,130 +133,375 @@
     <rdfs:domain rdf:resource="http://example.org/smartcity#Transport"/>
     <rdfs:range rdf:resource="http://example.org/smartcity#Energie"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Trottinette_2">
-    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Trottinette"/>
-    <ont:Nom>bus test </ont:Nom>
-    <ont:Capacite rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">32</ont:Capacite>
-    <ont:Immatriculation>bus 324 ewq</ont:Immatriculation>
-    <ont:VitesseMax rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">90</ont:VitesseMax>
-    <ont:estElectrique rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">false</ont:estElectrique>
-    <ont:ImageURL>https://res.cloudinary.com/duluvuhp4/image/upload/v1761403670/smart_city_stations/station_Trottinette_2.jpg</ont:ImageURL>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aNomStation">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Station"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
   </rdf:Description>
-  <rdf:Description rdf:nodeID="N1696d0f6e17745b4a2bc389f0f5282d7">
-    <rdf:first rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Vélo"/>
-    <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aDateEvenement">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#dateTime"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Trafic">
+  <rdf:Description rdf:nodeID="Nd80afc5b4a8f46c4900dd555b0bc0fad">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+    <owl:onProperty rdf:resource="http://example.org/smartcity#aHoraire"/>
+    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
+    <owl:onClass rdf:resource="http://example.org/smartcity#Horaire"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/smartcity#partDe">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Trajet"/>
+    <rdfs:range rdf:resource="http://example.org/smartcity#Station"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="N8e920c1de612499c9c00096f3d492488">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
+    <owl:members rdf:nodeID="Nd37ff78dd46b423ea3f0cbdb53e74f4d"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aPrixTicket">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Ticket"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="Nd3af518644784d638ed0ea9512bed5ab">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+    <owl:onProperty rdf:resource="http://example.org/smartcity#mesure"/>
+    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
+    <owl:onClass rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="Nabe840f7c4c94d748bc81419b8169b22">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+    <owl:onProperty rdf:resource="http://example.org/smartcity#arriveA"/>
+    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
+    <owl:onClass rdf:resource="http://example.org/smartcity#Station"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Bus">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Capteur"/>
+    <owl:equivalentClass rdf:nodeID="Nd80afc5b4a8f46c4900dd555b0bc0fad"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Transport"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Nom">
+  <rdf:Description rdf:about="http://example.org/smartcity#Utilisateur">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <owl:equivalentClass rdf:nodeID="N2c432dc0260f465abde0ae78e50e0189"/>
+    <owl:equivalentClass rdf:nodeID="N9e1fb6e61fff42458fd9766b9ae78e4a"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="N2c432dc0260f465abde0ae78e50e0189">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+    <owl:onProperty rdf:resource="http://example.org/smartcity#aTicket"/>
+    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
+    <owl:onClass rdf:resource="http://example.org/smartcity#Ticket"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Email">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
     <rdfs:domain rdf:resource="http://example.org/smartcity#Utilisateur"/>
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
   </rdf:Description>
-  <rdf:Description rdf:nodeID="Nf70e76f3b7844006a3df4c7163efa6fd">
-    <rdf:first rdf:resource="http://example.org/smartcity#Capteur"/>
-    <rdf:rest rdf:nodeID="Nbacb2d7928674413893e0bd218f51267"/>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#CarteAbonnement">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Utilisateur"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Touriste">
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#StationBus">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Station"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aLatitude">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Station"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Citoyen">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
     <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Utilisateur"/>
+    <owl:disjointWith rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Touriste"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Immatriculation">
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#estElectrique">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
     <rdfs:domain rdf:resource="http://example.org/smartcity#Transport"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aPrix">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Trajet"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  <rdf:Description rdf:nodeID="N9e1fb6e61fff42458fd9766b9ae78e4a">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+    <owl:onProperty rdf:resource="http://example.org/smartcity#utiliseTransport"/>
+    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
+    <owl:onClass rdf:resource="http://example.org/smartcity#Transport"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#CentreVille">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/smartcity#Trajet">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <owl:equivalentClass rdf:nodeID="Nabe840f7c4c94d748bc81419b8169b22"/>
+    <owl:equivalentClass rdf:nodeID="Nd1c1b36e652f46bdbf5d719fe8089342"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/smartcity#utiliseTransport">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <owl:inverseOf rdf:resource="http://www.co-ode.org/ontologies/ont.owl#estUtilisePar"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Utilisateur"/>
+    <rdfs:range rdf:resource="http://example.org/smartcity#Transport"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/smartcity#mesure">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Capteur"/>
+    <rdfs:range rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Eléctreique_1">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Électrique"/>
+    <ont:Nom>Electrique</ont:Nom>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#StationMétro">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Station"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://example.org/smartcity#circuleDans">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
     <rdfs:domain rdf:resource="http://example.org/smartcity#Transport"/>
     <rdfs:range rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Capteur_1">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
-    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Trafic"/>
-    <smartcity:mesure rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Accident_1"/>
-    <ont:Nom>Capteur01</ont:Nom>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="N394524d2023c486eb56280f1881380fe">
-    <rdf:first rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
-    <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="Ned714819855c4f279dcef1d15ca173b7">
+  <rdf:Description rdf:nodeID="N059a54cd32ee417e9f32ccea4662004b">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
-    <owl:onProperty rdf:resource="http://example.org/smartcity#organiseDans"/>
+    <owl:onProperty rdf:resource="http://example.org/smartcity#alimentePar"/>
     <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
-    <owl:onClass rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
+    <owl:onClass rdf:resource="http://example.org/smartcity#Energie"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Embouteillage">
+  <rdf:Description rdf:about="http://example.org/smartcity#connecteA">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Station"/>
+    <rdfs:range rdf:resource="http://example.org/smartcity#Station"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#ZoneIndustrielle">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#Ticket">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Station_1">
+    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#StationBus"/>
+    <ont:aNomStation>test</ont:aNomStation>
+    <ont:aLatitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">36.849508</ont:aLatitude>
+    <ont:aLongitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">10.200554</ont:aLongitude>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Parking">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Station"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="N39e20700db12434c8d87528cd74e80a9">
-    <rdf:first rdf:resource="http://example.org/smartcity#Horaire"/>
-    <rdf:rest rdf:nodeID="N57b6611ff9e641b8a1e5cf72823084e7"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#TicketSimple">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Ticket"/>
-  </rdf:Description>
-  <rdf:Description rdf:nodeID="N178178b78630479f9d8df7625711073b">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
-    <owl:members rdf:nodeID="Nf70e76f3b7844006a3df4c7163efa6fd"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Diesel">
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Électrique">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
     <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Energie"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="Nd1c1b36e652f46bdbf5d719fe8089342">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+    <owl:onProperty rdf:resource="http://example.org/smartcity#partDe"/>
+    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
+    <owl:onClass rdf:resource="http://example.org/smartcity#Station"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/smartcity#organiseDans">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+    <rdfs:range rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Zone_1">
+    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#CentreVille"/>
+    <ont:Nom>eqeqwewq</ont:Nom>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/smartcity#Station">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aValide">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Ticket"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Trottinette">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
     <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Transport"/>
   </rdf:Description>
-  <rdf:Description rdf:nodeID="N57b6611ff9e641b8a1e5cf72823084e7">
+  <rdf:Description rdf:nodeID="N17ce582373b34f398ee6e3b5f4a06747">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+    <owl:onProperty rdf:resource="http://example.org/smartcity#aHoraire"/>
+    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
+    <owl:onClass rdf:resource="http://example.org/smartcity#Horaire"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/smartcity#ZoneUrbaine">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="N2c886755108144dc8227e58f16d97a2c">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Restriction"/>
+    <owl:onProperty rdf:resource="http://example.org/smartcity#circuleDans"/>
+    <owl:minQualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:minQualifiedCardinality>
+    <owl:onClass rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aDuree">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Trajet"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#VitesseMax">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Transport"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Utilisateur_2">
+    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Citoyen"/>
+    <ont:Nom>wael</ont:Nom>
+    <ont:Email>wael.marwani@esprit.tn</ont:Email>
+    <ont:MotDePasse>211JMT6434</ont:MotDePasse>
+    <ont:Age rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">43</ont:Age>
+    <ont:ImageURL>https://res.cloudinary.com/duluvuhp4/image/upload/v1761403218/smart_city_profiles/user_Utilisateur_2.jpg</ont:ImageURL>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="N2a76fb1fb15d427bbe3c0a0c1745ad80">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Ontology"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Trajet_1">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+    <rdf:type rdf:resource="http://example.org/smartcity#Trajet"/>
+    <ont:Nom>TrajetCentreVille</ont:Nom>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#estUtilisePar">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Transport"/>
+    <rdfs:range rdf:resource="http://example.org/smartcity#Utilisateur"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Vélo">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Transport"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="N06f60d3eed3e410ea0d4035846468ff2">
     <rdf:first rdf:resource="http://example.org/smartcity#Ticket"/>
     <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aLongitude">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
-    <rdfs:domain rdf:resource="http://example.org/smartcity#Station"/>
-    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  <rdf:Description rdf:nodeID="N9e79c85f5f0949549dd0f721a87727c5">
+    <rdf:first rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Métro"/>
+    <rdf:rest rdf:nodeID="N0c86568db2044b889140ebcf62e66ed0"/>
   </rdf:Description>
-  <rdf:Description rdf:nodeID="N01119a34157c40a997bd625a5d8917c7">
-    <rdf:first rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Trottinette"/>
-    <rdf:rest rdf:nodeID="N818934ea09b5488aa86d37b560f47ccc"/>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#VoiturePartagée">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Transport"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="Nb5d66ee73e064f4f806211c9ba3db422">
+    <rdf:first rdf:resource="http://example.org/smartcity#Energie"/>
+    <rdf:rest rdf:nodeID="Na6fcbc0faee446f39ac626ab6398cecd"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="Nd37ff78dd46b423ea3f0cbdb53e74f4d">
+    <rdf:first rdf:resource="http://example.org/smartcity#Capteur"/>
+    <rdf:rest rdf:nodeID="N4dc23e87719c40ae841de3a2cf985bc9"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Nom">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Utilisateur"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/smartcity#aHoraire">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Transport"/>
+    <rdfs:range rdf:resource="http://example.org/smartcity#Horaire"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/smartcity#Capteur">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <owl:equivalentClass rdf:nodeID="Nd3af518644784d638ed0ea9512bed5ab"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aGravite">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Parking">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Station"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#QualitéAir">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
     <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Capteur"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#Horaire">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Ticket_1">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#TicketSimple"/>
+    <ont:aDateEmission rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2025-09-27T08:00:00</ont:aDateEmission>
+    <ont:aPrixTicket rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1.2</ont:aPrixTicket>
+    <ont:aValide rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ont:aValide>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#AbonnementMensuel">
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aPrix">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Trajet"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="Ncce9c60d04144e7d871e9035df7deada">
+    <rdf:first rdf:resource="http://www.co-ode.org/ontologies/ont.owl#VoiturePartagée"/>
+    <rdf:rest rdf:nodeID="Nc1e3fad0362e46b19c0eb3220ac2225d"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="N0c86568db2044b889140ebcf62e66ed0">
+    <rdf:first rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Trottinette"/>
+    <rdf:rest rdf:nodeID="Ncce9c60d04144e7d871e9035df7deada"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Embouteillage">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Capteur_1">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
+    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Trafic"/>
+    <ont:Nom>Capteur01</ont:Nom>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/smartcity#aTicket">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Utilisateur"/>
+    <rdfs:range rdf:resource="http://example.org/smartcity#Ticket"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aDescription">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Accident">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#TicketSimple">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
     <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Ticket"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#ZoneUrbaine">
+  <rdf:Description rdf:nodeID="Nb2bb1815ca83429cada07a330a02da55">
+    <rdf:first rdf:resource="http://example.org/smartcity#Station"/>
+    <rdf:rest rdf:nodeID="N190d816c024141378ac17ede048d267e"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="N8539348b895446e986ade21be2fe98e9">
+    <rdf:first rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Bus"/>
+    <rdf:rest rdf:nodeID="N9e79c85f5f0949549dd0f721a87727c5"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="Na6fcbc0faee446f39ac626ab6398cecd">
+    <rdf:first rdf:resource="http://example.org/smartcity#Horaire"/>
+    <rdf:rest rdf:nodeID="N06f60d3eed3e410ea0d4035846468ff2"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#aDistance">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+    <rdfs:domain rdf:resource="http://example.org/smartcity#Trajet"/>
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="Nefeea332e3264e048736507da343dc0e">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
+    <owl:members rdf:nodeID="N8539348b895446e986ade21be2fe98e9"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Diesel">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Energie"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Métro">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <owl:equivalentClass rdf:nodeID="N17ce582373b34f398ee6e3b5f4a06747"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Transport"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="N9b7b9fb32d3d4eadbc5c4f5cd04c92b1">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
+    <owl:members rdf:nodeID="Nb5d66ee73e064f4f806211c9ba3db422"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Banlieue">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#ZoneUrbaine"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://example.org/smartcity#Ticket">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://example.org/smartcity#Station">
+  <rdf:Description rdf:about="http://example.org/smartcity#Energie">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#StationMétro">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:subClassOf rdf:resource="http://example.org/smartcity#Station"/>
   </rdf:Description>
 </rdf:RDF>

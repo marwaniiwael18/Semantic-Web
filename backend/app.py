@@ -221,7 +221,7 @@ def get_events():
     PREFIX ont: <http://www.co-ode.org/ontologies/ont.owl#>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     
-    SELECT ?event ?nom ?type ?description ?date ?gravite ?trajet ?zone
+    SELECT ?event ?nom ?type ?description ?date ?gravite ?trajet ?zone ?imageUrl
     WHERE {
         ?event rdf:type ?eventType .
         ?eventType rdfs:subClassOf* smartcity:EvenementDeCirculation .
@@ -233,6 +233,7 @@ def get_events():
         OPTIONAL { ?event ont:aGravite ?gravite }
         OPTIONAL { ?event smartcity:impacte ?trajet }
         OPTIONAL { ?event smartcity:organiseDans ?zone }
+        OPTIONAL { ?event ont:imageUrl ?imageUrl }
         
         BIND(STRAFTER(STR(?eventType), "#") AS ?type)
     }
@@ -250,7 +251,8 @@ def get_events():
             "date": str(row.date) if row.date else None,
             "gravite": int(row.gravite) if row.gravite else None,
             "trajet": str(row.trajet).split('#')[-1] if row.trajet else None,
-            "zone": str(row.zone).split('#')[-1] if row.zone else None
+            "zone": str(row.zone).split('#')[-1] if row.zone else None,
+            "imageUrl": str(row.imageUrl) if row.imageUrl else None
         })
     
     return jsonify(events)
@@ -1101,6 +1103,8 @@ def create_event():
             g.add((event_uri, ONT.aGravite, Literal(int(data['gravite']), datatype=XSD.int)))
         if data.get('date'):
             g.add((event_uri, ONT.aDateEvenement, Literal(data['date'], datatype=XSD.dateTime)))
+        if data.get('imageUrl'):
+            g.add((event_uri, ONT.imageUrl, Literal(data['imageUrl'])))
         
         save_graph()
         
@@ -1127,6 +1131,7 @@ def update_event(event_id):
         g.remove((event_uri, ONT.aDescription, None))
         g.remove((event_uri, ONT.aGravite, None))
         g.remove((event_uri, ONT.aDateEvenement, None))
+        g.remove((event_uri, ONT.imageUrl, None))
         
         if data.get('nom'):
             g.add((event_uri, ONT.Nom, Literal(data['nom'])))
@@ -1136,6 +1141,8 @@ def update_event(event_id):
             g.add((event_uri, ONT.aGravite, Literal(int(data['gravite']), datatype=XSD.int)))
         if data.get('date'):
             g.add((event_uri, ONT.aDateEvenement, Literal(data['date'], datatype=XSD.dateTime)))
+        if data.get('imageUrl'):
+            g.add((event_uri, ONT.imageUrl, Literal(data['imageUrl'])))
         
         save_graph()
         

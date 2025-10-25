@@ -65,7 +65,9 @@ const EventManagement = ({ onUpdate }) => {
     try {
       // Upload image first if there's a new image
       let imageUrl = formData.imageUrl || '';
-      if (imagePreview && imageFile) {
+      
+      // Only upload if there's a NEW image (imageFile exists)
+      if (imageFile && imagePreview) {
         const uploadResponse = await fetch(`${API_URL}/upload/event-image`, {
           method: 'POST',
           headers: {
@@ -80,6 +82,8 @@ const EventManagement = ({ onUpdate }) => {
         const uploadData = await uploadResponse.json();
         if (uploadData.success) {
           imageUrl = uploadData.url;
+        } else {
+          console.error('Image upload failed:', uploadData.error);
         }
       }
       
@@ -94,7 +98,14 @@ const EventManagement = ({ onUpdate }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({...formData, imageUrl})
+        body: JSON.stringify({
+          nom: formData.nom,
+          type: formData.type,
+          description: formData.description,
+          gravite: formData.gravite,
+          date: formData.date,
+          imageUrl: imageUrl
+        })
       });
 
       const data = await response.json();
@@ -147,8 +158,13 @@ const EventManagement = ({ onUpdate }) => {
         date: event.date ? event.date.split('T')[0] : new Date().toISOString().split('T')[0],
         imageUrl: event.imageUrl || ''
       });
+      // Set image preview to existing imageUrl (not a new file)
       if (event.imageUrl) {
         setImagePreview(event.imageUrl);
+        setImageFile(null); // No new file, just showing existing
+      } else {
+        setImagePreview(null);
+        setImageFile(null);
       }
     } else {
       setEditingEvent(null);
@@ -160,6 +176,8 @@ const EventManagement = ({ onUpdate }) => {
         date: new Date().toISOString().split('T')[0],
         imageUrl: ''
       });
+      setImagePreview(null);
+      setImageFile(null);
     }
     setShowModal(true);
   };

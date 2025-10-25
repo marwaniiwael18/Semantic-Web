@@ -1,534 +1,459 @@
-// StationManagement.js - Station Management with Interactive Map
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
-import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
-import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import './StationManagement.css';
 
 const API_URL = 'http://localhost:5001/api';
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN;
 
+console.log('🔧 [STATION MODULE] API_URL:', API_URL);
+console.log('🔧 [STATION MODULE] MAPBOX_TOKEN:', MAPBOX_TOKEN ? `EXISTS (${MAPBOX_TOKEN.substring(0, 10)}...)` : '❌ MISSING');
+
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
-const StationManagement = ({ onUpdate }) => {
+function StationManagement() {
+  console.log('🚀 [STATION COMPONENT] Component rendering/re-rendering');
+
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('map');
-  const [addMode, setAddMode] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [formData, setFormData] = useState({
+    id: '',
     nom: '',
-    type: 'StationBus',
+    type: 'Station',
     latitude: '',
     longitude: ''
   });
   const [editingStation, setEditingStation] = useState(null);
-  const [mapReady, setMapReady] = useState(false);
-  
+
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markers = useRef([]);
-  const tempMarker = useRef(null);
-  const addModeRef = useRef(false);
 
-  const getStationIcon = useCallback((type) => {
-    switch(type) {
-      case 'StationBus': return '🚌';
-      case 'StationMétro': return '🚇';
-      case 'Parking': return '🅿️';
-      default: return '📍';
-    }
-  }, []);
-
-  const loadStations = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/stations`);
-      const data = await response.json();
-      setStations(data);
-    } catch (error) {
-      console.error('Error loading stations:', error);
-    }
-    setLoading(false);
-  }, []);
+  console.log('📊 [STATION COMPONENT] Current state:', {
+    viewMode,
+    showForm,
+    mapReady,
+    stationsCount: stations.length,
+    loading,
+    error,
+    'mapContainer.current': mapContainer.current ? 'EXISTS' : 'NULL',
+    'map.current': map.current ? 'EXISTS' : 'NULL'
+  });
 
   useEffect(() => {
+    console.log('📥 [STATION COMPONENT] Initial mount - loading stations');
     loadStations();
-  }, [loadStations]);
+  }, []);
 
-  // Initialize map once on mount
+  const loadStations = async () => {
+    console.log('📡 [STATION API] Fetching stations from:', `${API_URL}/stations`);
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/stations`);
+      console.log('📡 [STATION API] Response received:', response.status, response.statusText);
+      const data = await response.json();
+      console.log('📡 [STATION API] Data parsed:', data);
+      console.log('📡 [STATION API] Number of stations:', data.length);
+      setStations(data);
+      setError(null);
+      console.log('✅ [STATION API] Stations loaded successfully');
+    } catch (error) {
+      console.error('💥 [STATION API] Error loading stations:', error);
+      console.error('💥 [STATION API] Error stack:', error.stack);
+      setError('Failed to load stations');
+    } finally {
+      setLoading(false);
+      console.log('✅ [STATION API] Loading complete');
+    }
+  };
+
+  // EXACT COPY from Dashboard - Initialize map
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
-    
+    console.log('🗺️ [STATION MAP] useEffect triggered');
+    console.log('🗺️ [STATION MAP] mapContainer.current:', mapContainer.current);
+    console.log('🗺️ [STATION MAP] map.current:', map.current);
+    console.log('🗺️ [STATION MAP] MAPBOX_TOKEN:', MAPBOX_TOKEN ? 'EXISTS' : 'MISSING');
+    console.log('🗺️ [STATION MAP] viewMode:', viewMode);
+    console.log('🗺️ [STATION MAP] showForm:', showForm);
+
     if (!MAPBOX_TOKEN) {
-      console.error('Mapbox token is not set');
+      console.log('❌ [STATION MAP] MAPBOX_TOKEN is missing - aborting');
+      return;
+    }
+    if (map.current) {
+      console.log('⏭️ [STATION MAP] map already exists - skipping init');
+      return;
+    }
+    if (!mapContainer.current) {
+      console.log('❌ [STATION MAP] mapContainer.current is NULL - will retry on next render');
       return;
     }
 
+    console.log('✅ [STATION MAP] All checks passed, setting timeout...');
+
     const timer = setTimeout(() => {
-      if (!mapContainer.current) return;
+      console.log('⏰ [STATION MAP] Timeout fired (100ms)');
+      console.log('🗺️ [STATION MAP] mapContainer.current in timeout:', mapContainer.current);
+      
+      if (!mapContainer.current) {
+        console.log('❌ [STATION MAP] mapContainer disappeared during timeout');
+        return;
+      }
 
       try {
+        console.log('🏗️ [STATION MAP] Creating new Mapbox map...');
         map.current = new mapboxgl.Map({
           container: mapContainer.current,
           style: 'mapbox://styles/mapbox/streets-v12',
           center: [10.1815, 36.8065],
           zoom: 11
         });
+        console.log('✅ [STATION MAP] Map instance created:', map.current);
 
         map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        console.log('✅ [STATION MAP] Navigation control added');
 
-        const geocoder = new MapboxGeocoder({
-          accessToken: mapboxgl.accessToken,
-          mapboxgl: mapboxgl,
-          marker: false,
-          placeholder: 'Search for a location...'
+        map.current.on('load', () => {
+          console.log('🎉 [STATION MAP] Map LOAD event fired!');
+          setMapReady(true);
+          map.current.resize();
+          console.log('✅ [STATION MAP] Map resized and ready');
         });
-        
-        map.current.addControl(geocoder, 'top-left');
 
         map.current.on('click', (e) => {
-          if (addModeRef.current) {
+          console.log('🖱️ [STATION MAP] Map clicked:', e.lngLat);
+          if (!showForm) {
             const { lng, lat } = e.lngLat;
-            
-            if (tempMarker.current) {
-              tempMarker.current.remove();
-            }
-
-            const el = document.createElement('div');
-            el.className = 'temp-station-marker';
-            el.innerHTML = '📍';
-            el.style.fontSize = '40px';
-
-            tempMarker.current = new mapboxgl.Marker(el)
-              .setLngLat([lng, lat])
-              .addTo(map.current);
-
-            setSelectedLocation({ lng, lat });
-            setFormData(prev => ({
-              ...prev,
+            setFormData({
+              id: '',
+              nom: '',
+              type: 'Station',
               latitude: lat.toFixed(6),
               longitude: lng.toFixed(6)
-            }));
-            setShowModal(true);
-            setAddMode(false);
-            addModeRef.current = false;
+            });
+            setShowForm(true);
+            setEditingStation(null);
+            console.log('✅ [STATION MAP] Form opened with coords:', lat, lng);
+          } else {
+            console.log('⏭️ [STATION MAP] Click ignored - form already open');
           }
         });
 
-        map.current.on('load', () => {
-          setMapReady(true);
-          map.current.resize();
-        });
+        console.log('✅ [STATION MAP] All event listeners attached');
 
       } catch (error) {
-        console.error('Error initializing map:', error);
+        console.error('💥 [STATION MAP] Error initializing map:', error);
+        console.error('💥 [STATION MAP] Error stack:', error.stack);
       }
     }, 100);
 
     return () => {
+      console.log('🧹 [STATION MAP] Cleanup function called');
       clearTimeout(timer);
       if (map.current) {
+        console.log('🗑️ [STATION MAP] Removing map instance');
         map.current.remove();
         map.current = null;
       }
       setMapReady(false);
+      console.log('✅ [STATION MAP] Cleanup complete');
     };
-  }, []);
+  }, [viewMode, showForm, loading]); // Re-run when viewMode, showForm, or loading changes
 
-  // Update markers
+  // EXACT COPY from Dashboard - Update markers
   useEffect(() => {
-    if (!map.current || !mapReady) return;
-    
+    console.log('📍 [STATION MARKERS] useEffect triggered');
+    console.log('📍 [STATION MARKERS] map.current:', map.current);
+    console.log('📍 [STATION MARKERS] mapReady:', mapReady);
+    console.log('📍 [STATION MARKERS] stations count:', stations.length);
+
+    if (!map.current || !mapReady) {
+      console.log('⏭️ [STATION MARKERS] Map not ready, skipping marker update');
+      return;
+    }
+
+    console.log('🧹 [STATION MARKERS] Removing old markers...');
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
+    console.log('✅ [STATION MARKERS] Old markers cleared');
 
-    stations.forEach(station => {
+    console.log('🏗️ [STATION MARKERS] Adding new markers for', stations.length, 'stations');
+    stations.forEach((station, index) => {
+      console.log(`📍 [STATION MARKERS] Processing station ${index + 1}:`, station);
+      
       if (station.latitude && station.longitude) {
         const el = document.createElement('div');
-        el.className = 'station-marker';
-        el.innerHTML = getStationIcon(station.type);
-        el.style.fontSize = '32px';
+        el.className = 'dashboard-marker station-marker';
+        el.innerHTML = '📍';
+        el.style.fontSize = '24px';
         el.style.cursor = 'pointer';
 
         const marker = new mapboxgl.Marker(el)
-          .setLngLat([station.longitude, station.latitude])
+          .setLngLat([parseFloat(station.longitude), parseFloat(station.latitude)])
           .setPopup(
             new mapboxgl.Popup({ offset: 25 })
               .setHTML(`
-                <div style="padding: 10px;">
-                  <h3 style="margin: 0 0 8px 0;">${getStationIcon(station.type)} ${station.nom}</h3>
-                  <p style="margin: 4px 0;"><strong>Type:</strong> ${station.type}</p>
-                  <p style="margin: 4px 0;"><strong>Coordinates:</strong><br/>${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}</p>
-                  <div style="margin-top: 10px; display: flex; gap: 8px;">
-                    <button 
-                      onclick="window.editStation('${station.id}')"
-                      style="padding: 6px 12px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer;"
-                    >
-                      ✏️ Edit
-                    </button>
-                    <button 
-                      onclick="window.deleteStation('${station.id}')"
-                      style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;"
-                    >
-                      🗑️ Delete
-                    </button>
-                  </div>
+                <div style="padding: 8px;">
+                  <h4 style="margin: 0 0 6px 0;">📍 ${station.nom}</h4>
+                  <p style="margin: 0; font-size: 12px; color: #666;">${station.type}</p>
                 </div>
               `)
           )
           .addTo(map.current);
 
         markers.current.push(marker);
+        console.log(`✅ [STATION MARKERS] Marker ${index + 1} added at [${station.longitude}, ${station.latitude}]`);
+      } else {
+        console.log(`⚠️ [STATION MARKERS] Station ${index + 1} missing coordinates - skipped`);
       }
     });
-  }, [stations, getStationIcon, mapReady]);
-
-  // Resize map when view changes
-  useEffect(() => {
-    if (viewMode === 'map' && map.current && mapReady) {
-      setTimeout(() => {
-        if (map.current) {
-          map.current.resize();
-        }
-      }, 100);
-    }
-  }, [viewMode, mapReady]);
+    console.log(`🎉 [STATION MARKERS] Total markers on map: ${markers.current.length}`);
+  }, [stations, mapReady]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-
     try {
-      const endpoint = editingStation 
-        ? `${API_URL}/stations/${editingStation.id}`
+      const url = editingStation
+        ? `${API_URL}/stations/${formData.id}`
         : `${API_URL}/stations`;
       
-      const method = editingStation ? 'PUT' : 'POST';
-
-      const response = await fetch(endpoint, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          nom: formData.nom,
-          type: formData.type,
-          latitude: parseFloat(formData.latitude),
-          longitude: parseFloat(formData.longitude)
-        })
+      const response = await fetch(url, {
+        method: editingStation ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
 
-      const data = await response.json();
-
-      if (data.success || response.ok) {
-        closeModal();
-        loadStations();
-        if (onUpdate) onUpdate();
-      } else {
-        alert('Error: ' + (data.error || 'Failed to save station'));
-      }
-    } catch (error) {
-      console.error('Error saving station:', error);
-      alert('Error saving station');
-    }
-    setLoading(false);
-  };
-
-  const handleDelete = useCallback(async (stationId) => {
-    if (window.confirm('Are you sure you want to delete this station?')) {
-      try {
-        const response = await fetch(`${API_URL}/stations/${stationId}`, {
-          method: 'DELETE'
-        });
-
-        const data = await response.json();
-
-        if (data.success || response.ok) {
-          loadStations();
-          if (onUpdate) onUpdate();
-        } else {
-          alert('Error: ' + (data.error || 'Failed to delete station'));
-        }
-      } catch (error) {
-        console.error('Error deleting station:', error);
-        alert('Error deleting station');
-      }
-    }
-  }, [loadStations, onUpdate]);
-
-  const closeModal = () => {
-    setShowModal(false);
-    setEditingStation(null);
-    setSelectedLocation(null);
-    setAddMode(false);
-    addModeRef.current = false;
-    if (map.current) {
-      map.current.getCanvas().style.cursor = '';
-    }
-    if (tempMarker.current) {
-      tempMarker.current.remove();
-      tempMarker.current = null;
+      if (!response.ok) throw new Error('Failed to save station');
+      
+      await loadStations();
+      setShowForm(false);
+      setEditingStation(null);
+      setFormData({ id: '', nom: '', type: 'Station', latitude: '', longitude: '' });
+    } catch (err) {
+      alert('Error: ' + err.message);
     }
   };
 
-  const startAddMode = () => {
-    setAddMode(true);
-    addModeRef.current = true;
-    if (map.current) {
-      map.current.getCanvas().style.cursor = 'crosshair';
-    }
-    alert('📍 Click anywhere on the map to add a new station');
-  };
-
-  const cancelAddMode = () => {
-    setAddMode(false);
-    addModeRef.current = false;
-    if (map.current) {
-      map.current.getCanvas().style.cursor = '';
-    }
-    if (tempMarker.current) {
-      tempMarker.current.remove();
-      tempMarker.current = null;
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this station?')) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/stations/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete');
+      await loadStations();
+    } catch (err) {
+      alert('Error: ' + err.message);
     }
   };
 
-  useEffect(() => {
-    window.editStation = (stationId) => {
-      const station = stations.find(s => s.id === stationId);
-      if (station) {
-        setEditingStation(station);
-        setFormData({
-          nom: station.nom,
-          type: station.type,
-          latitude: station.latitude || '',
-          longitude: station.longitude || ''
-        });
-        setShowModal(true);
-      }
-    };
-
-    window.deleteStation = (stationId) => {
-      handleDelete(stationId);
-    };
-
-    return () => {
-      delete window.editStation;
-      delete window.deleteStation;
-    };
-  }, [stations, handleDelete]);
+  const handleEdit = (station) => {
+    setEditingStation(station);
+    setFormData({
+      id: station.id,
+      nom: station.nom || '',
+      type: station.type || 'Station',
+      latitude: station.latitude || '',
+      longitude: station.longitude || ''
+    });
+    setShowForm(true);
+  };
 
   if (loading && stations.length === 0) {
-    return <div className="loading">Loading stations...</div>;
+    return (
+      <div className="station-management">
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Loading stations...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="crud-container" style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-      <div className="crud-header">
-        <div className="module-info-card">
-          <div className="module-icon">📍</div>
-          <div className="module-details">
-            <h2>Station Management</h2>
-            <p>Interactive map: Click to add stations | Search with autocomplete</p>
+    <div className="station-management">
+      <div className="station-header">
+        <h1>Station Management</h1>
+        <div className="header-actions">
+          <div className="view-toggle">
+            <button
+              className={viewMode === 'map' ? 'active' : ''}
+              onClick={() => {
+                console.log('🔄 [VIEW TOGGLE] Switching to MAP view');
+                setViewMode('map');
+              }}
+            >
+              🗺️ Map View
+            </button>
+            <button
+              className={viewMode === 'table' ? 'active' : ''}
+              onClick={() => {
+                console.log('🔄 [VIEW TOGGLE] Switching to TABLE view');
+                setViewMode('table');
+              }}
+            >
+              📋 Table View
+            </button>
           </div>
-        </div>
-        <div style={{display: 'flex', gap: '10px'}}>
-          {addMode ? (
-            <>
-              <button className="btn btn-secondary" onClick={cancelAddMode}>
-                ❌ Cancel
-              </button>
-              <div style={{padding: '10px 20px', background: '#667eea', color: 'white', borderRadius: '8px', fontWeight: '600'}}>
-                📍 Click on map to add station
-              </div>
-            </>
-          ) : (
-            <>
-              <button className="btn btn-success" onClick={startAddMode}>
-                ➕ Add Station on Map
-              </button>
-              <button 
-                className="btn btn-primary" 
-                onClick={() => setViewMode(viewMode === 'map' ? 'table' : 'map')}
-              >
-                {viewMode === 'map' ? '📋 Table View' : '🗺️ Map View'}
-              </button>
-            </>
-          )}
+          <button 
+            className="add-station-btn"
+            onClick={() => {
+              setShowForm(true);
+              setEditingStation(null);
+              setFormData({ id: '', nom: '', type: 'Station', latitude: '', longitude: '' });
+            }}
+          >
+            + Add Station
+          </button>
         </div>
       </div>
 
-      <div 
-        style={{
-          marginTop: '20px',
-          borderRadius: '16px',
-          overflow: 'hidden',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          height: '600px',
-          width: '100%',
-          visibility: viewMode === 'map' ? 'visible' : 'hidden',
-          position: viewMode === 'map' ? 'relative' : 'absolute',
-          zIndex: viewMode === 'map' ? 1 : -1
-        }}
-      >
-        <div 
-          ref={mapContainer} 
-          style={{width: '100%', height: '100%'}}
-        />
-        
-        {viewMode === 'map' && (
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '20px',
-            background: 'white',
-            padding: '15px 25px',
-            borderRadius: '12px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            fontWeight: '700',
-            fontSize: '16px',
-            color: '#667eea'
-          }}>
-            📍 {stations.length} Station{stations.length !== 1 ? 's' : ''}
-          </div>
-        )}
-      </div>
-
-      {viewMode === 'table' && (
-        <div style={{marginTop: '20px'}}>
-          {stations.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">📍</div>
-              <h3>No Stations</h3>
-              <p>Click "Add Station on Map" to start</p>
-            </div>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Latitude</th>
-                  <th>Longitude</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stations.map((station, index) => (
-                  <tr key={index}>
-                    <td><strong>{getStationIcon(station.type)} {station.nom}</strong></td>
-                    <td>
-                      <span className="badge badge-primary">{station.type}</span>
-                    </td>
-                    <td>{station.latitude ? station.latitude.toFixed(4) : '-'}</td>
-                    <td>{station.longitude ? station.longitude.toFixed(4) : '-'}</td>
-                    <td className="actions-cell">
-                      <button 
-                        className="btn btn-warning"
-                        onClick={() => window.editStation(station.id)}
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button 
-                        className="btn btn-danger"
-                        onClick={() => window.deleteStation(station.id)}
-                      >
-                        ��️ Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+      {error && (
+        <div className="error-message">
+          <span>⚠️ {error}</span>
+          <button onClick={loadStations}>Retry</button>
         </div>
       )}
 
-      {showModal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{editingStation ? 'Edit Station' : 'New Station'}</h3>
-            {selectedLocation && !editingStation && (
-              <div style={{
-                background: '#e0f2fe',
-                padding: '12px',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                fontSize: '14px',
-                color: '#0369a1'
-              }}>
-                �� Location selected: {formData.latitude}, {formData.longitude}
-              </div>
-            )}
+      {showForm && (
+        <div className="form-overlay" onClick={() => setShowForm(false)}>
+          <div className="station-form-container" onClick={(e) => e.stopPropagation()}>
+            <div className="form-header">
+              <h2>{editingStation ? 'Edit Station' : 'Add New Station'}</h2>
+              <button className="close-btn" onClick={() => setShowForm(false)}>×</button>
+            </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Station Name *</label>
+                
+              </div>
+              <div className="form-group">
+                <label>Station Name*</label>
                 <input
                   type="text"
+                  name="nom"
                   value={formData.nom}
                   onChange={(e) => setFormData({...formData, nom: e.target.value})}
-                  placeholder="Ex: Bab El Bhar Station"
                   required
                 />
               </div>
-
               <div className="form-group">
-                <label>Type *</label>
+                <label>Type*</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
-                  required
                 >
-                  <option value="StationBus">🚌 Bus Station</option>
-                  <option value="StationMétro">🚇 Metro Station</option>
-                  <option value="Parking">🅿️ Parking</option>
-                  <option value="StationVelo">🚲 Bike Station</option>
+                  <option value="Station">Station</option>
+                  <option value="BusStation">Bus Station</option>
+                  <option value="MetroStation">Metro Station</option>
                 </select>
               </div>
-
               <div className="form-row">
                 <div className="form-group">
-                  <label>Latitude *</label>
+                  <label>Latitude*</label>
                   <input
                     type="number"
                     step="0.000001"
                     value={formData.latitude}
                     onChange={(e) => setFormData({...formData, latitude: e.target.value})}
-                    placeholder="Ex: 36.806495"
                     required
-                    readOnly={!!selectedLocation && !editingStation}
                   />
                 </div>
-
                 <div className="form-group">
-                  <label>Longitude *</label>
+                  <label>Longitude*</label>
                   <input
                     type="number"
                     step="0.000001"
                     value={formData.longitude}
                     onChange={(e) => setFormData({...formData, longitude: e.target.value})}
-                    placeholder="Ex: 10.181532"
                     required
-                    readOnly={!!selectedLocation && !editingStation}
                   />
                 </div>
               </div>
-
               <div className="form-actions">
-                <button type="button" className="btn btn-secondary" onClick={closeModal}>
+                <button type="button" onClick={() => setShowForm(false)} className="cancel-btn">
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-success">
-                  {editingStation ? '✏️ Update Station' : '✅ Create Station'}
+                <button type="submit" className="submit-btn">
+                  {editingStation ? 'Update' : 'Create'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Map Section - ALWAYS RENDERED, visibility controlled by CSS */}
+      <div 
+        className="dashboard-section map-section"
+        style={{ display: viewMode === 'map' ? 'block' : 'none' }}
+      >
+        {console.log('🔍 [MAP CONTAINER] Rendering map section, viewMode:', viewMode)}
+        <div className="map-info">
+          <p>📍 Click anywhere on the map to add a new station</p>
+          <p>Total Stations: {stations.length}</p>
+        </div>
+        <div 
+          ref={mapContainer} 
+          className="dashboard-map"
+          style={{
+            width: '100%',
+            height: '600px',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.1)'
+          }}
+        />
+      </div>
+
+      {/* Table Section - ALWAYS RENDERED, visibility controlled by CSS */}
+      <div style={{ display: viewMode === 'table' ? 'block' : 'none' }}>
+        <div className="stations-table-container">
+          <table className="stations-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Latitude</th>
+                <th>Longitude</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stations.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="no-data">No stations found</td>
+                </tr>
+              ) : (
+                stations.map(station => (
+                  <tr key={station.id}>
+                    <td>{station.id}</td>
+                    <td>{station.nom || 'N/A'}</td>
+                    <td>{station.type || 'Station'}</td>
+                    <td>{station.latitude || 'N/A'}</td>
+                    <td>{station.longitude || 'N/A'}</td>
+                    <td>
+                      <div className="action-buttons">
+                        <button className="edit-btn" onClick={() => handleEdit(station)}>
+                          ✏️ Edit
+                        </button>
+                        <button className="delete-btn" onClick={() => handleDelete(station.id)}>
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
-};
+}
 
 export default StationManagement;

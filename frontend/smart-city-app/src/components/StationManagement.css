@@ -443,3 +443,143 @@
     width: 100%;
   }
 }
+
+/* Enhanced Form Styles */
+.type-select {
+  font-size: 16px;
+  padding: 12px 15px;
+  cursor: pointer;
+}
+
+.coordinate-input {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.coordinate-hint {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 14px;
+  margin: 15px 0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+  }
+}
+
+/* Temporary Marker Animation */
+.temp-marker {
+  cursor: pointer;
+  filter: drop-shadow(0 0 10px rgba(255, 107, 107, 0.8));
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.2);
+  }
+}
+
+/* Enhanced Submit Button */
+.submit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+/* Enhanced Cancel Button */
+.cancel-btn {
+  background: #f8f9fa;
+  color: #6c757d;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background: #e9ecef;
+  color: #495057;
+  transform: translateY(-1px);
+}
+
+/* Enhanced Form Header */
+.form-header h2 {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+/* Map Info Enhancement */
+.map-info {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.map-info p {
+  margin: 8px 0;
+  font-size: 15px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.map-info p:first-child {
+  font-size: 16px;
+  color: #667eea;
+}
+
+/* Station Marker Animations */
+.station-marker {
+  transition: all 0.3s ease;
+}
+
+.station-marker:hover {
+  transform: scale(1.2) !important;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)) !important;
+}
+
+/* Enhanced Table Styles */
+.stations-table th:first-child {
+  width: 80px;
+  text-align: center;
+}
+
+.stations-table td {
+  vertical-align: middle;
+}
+
+.stations-table tbody tr {
+  transition: all 0.3s ease;
+}
+
+.stations-table tbody tr:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+

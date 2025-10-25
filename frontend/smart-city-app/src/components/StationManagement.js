@@ -21,13 +21,28 @@ function StationManagement() {
   const [showForm, setShowForm] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [formData, setFormData] = useState({
-    id: '',
     nom: '',
-    type: 'Station',
+    type: 'StationMétro',
     latitude: '',
     longitude: ''
   });
   const [editingStation, setEditingStation] = useState(null);
+  const [tempMarker, setTempMarker] = useState(null); // Temporary marker for new station location
+
+  // Function to get emoji for station type
+  const getStationEmoji = (type) => {
+    const emojiMap = {
+      'StationMétro': '🚇',
+      'StationBus': '🚌',
+      'StationTrain': '🚆',
+      'StationTram': '🚊',
+      'Parking': '🅿️',
+      'StationVélo': '🚲',
+      'StationTaxi': '🚕',
+      'Arrêt': '🛑'
+    };
+    return emojiMap[type] || '📍';
+  };
 
   const mapContainer = useRef(null);
   const map = useRef(null);
@@ -126,21 +141,52 @@ function StationManagement() {
 
         map.current.on('click', (e) => {
           console.log('🖱️ [STATION MAP] Map clicked:', e.lngLat);
-          if (!showForm) {
-            const { lng, lat } = e.lngLat;
-            setFormData({
-              id: '',
-              nom: '',
-              type: 'Station',
-              latitude: lat.toFixed(6),
-              longitude: lng.toFixed(6)
-            });
-            setShowForm(true);
-            setEditingStation(null);
-            console.log('✅ [STATION MAP] Form opened with coords:', lat, lng);
-          } else {
-            console.log('⏭️ [STATION MAP] Click ignored - form already open');
+          const { lng, lat } = e.lngLat;
+          
+          // Remove previous temporary marker if exists
+          if (tempMarker) {
+            tempMarker.remove();
           }
+          
+          // Create temporary marker at clicked location
+          const el = document.createElement('div');
+          el.className = 'temp-marker';
+          el.innerHTML = '📍';
+          el.style.fontSize = '32px';
+          el.style.animation = 'bounce 0.5s ease';
+          
+          const newTempMarker = new mapboxgl.Marker(el)
+            .setLngLat([lng, lat])
+            .setPopup(
+              new mapboxgl.Popup({ offset: 25, closeButton: false })
+                .setHTML(`
+                  <div style="padding: 8px; text-align: center;">
+                    <p style="margin: 0; font-weight: bold;">📍 New Station Location</p>
+                    <p style="margin: 4px 0 0 0; font-size: 11px; color: #666;">
+                      ${lat.toFixed(6)}, ${lng.toFixed(6)}
+                    </p>
+                  </div>
+                `)
+            )
+            .addTo(map.current);
+          
+          newTempMarker.togglePopup();
+          setTempMarker(newTempMarker);
+          
+          // Auto-generate ID based on timestamp for uniqueness
+          const timestamp = Date.now();
+          const stationId = `Station_${timestamp}`;
+          
+          setFormData({
+            id: stationId, // Hidden from user but used for backend
+            nom: '',
+            type: 'StationMétro',
+            latitude: lat.toFixed(6),
+            longitude: lng.toFixed(6)
+          });
+          setShowForm(true);
+          setEditingStation(null);
+          console.log('✅ [STATION MAP] Form opened with coords:', lat, lng);
         });
 
         console.log('✅ [STATION MAP] All event listeners attached');
@@ -186,27 +232,47 @@ function StationManagement() {
       console.log(`📍 [STATION MARKERS] Processing station ${index + 1}:`, station);
       
       if (station.latitude && station.longitude) {
+        // Get the appropriate emoji for this station type
+        const stationEmoji = getStationEmoji(station.type);
+        
         const el = document.createElement('div');
         el.className = 'dashboard-marker station-marker';
-        el.innerHTML = '📍';
-        el.style.fontSize = '24px';
+        el.innerHTML = stationEmoji;
+        el.style.fontSize = '32px';
         el.style.cursor = 'pointer';
+        el.style.transition = 'transform 0.2s ease';
+        el.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))';
+        
+        // Add hover effect
+        el.addEventListener('mouseenter', () => {
+          el.style.transform = 'scale(1.3)';
+        });
+        el.addEventListener('mouseleave', () => {
+          el.style.transform = 'scale(1)';
+        });
 
         const marker = new mapboxgl.Marker(el)
           .setLngLat([parseFloat(station.longitude), parseFloat(station.latitude)])
           .setPopup(
             new mapboxgl.Popup({ offset: 25 })
               .setHTML(`
-                <div style="padding: 8px;">
-                  <h4 style="margin: 0 0 6px 0;">📍 ${station.nom}</h4>
-                  <p style="margin: 0; font-size: 12px; color: #666;">${station.type}</p>
+                <div style="padding: 12px; min-width: 200px;">
+                  <h4 style="margin: 0 0 8px 0; font-size: 16px; color: #2c3e50;">
+                    ${stationEmoji} ${station.nom}
+                  </h4>
+                  <p style="margin: 0; font-size: 13px; color: #7f8c8d; font-weight: 600;">
+                    ${station.type}
+                  </p>
+                  <p style="margin: 8px 0 0 0; font-size: 11px; color: #95a5a6; font-family: monospace;">
+                    📍 ${parseFloat(station.latitude).toFixed(4)}, ${parseFloat(station.longitude).toFixed(4)}
+                  </p>
                 </div>
               `)
           )
           .addTo(map.current);
 
         markers.current.push(marker);
-        console.log(`✅ [STATION MARKERS] Marker ${index + 1} added at [${station.longitude}, ${station.latitude}]`);
+        console.log(`✅ [STATION MARKERS] Marker ${index + 1} added at [${station.longitude}, ${station.latitude}] with emoji: ${stationEmoji}`);
       } else {
         console.log(`⚠️ [STATION MARKERS] Station ${index + 1} missing coordinates - skipped`);
       }
@@ -229,10 +295,16 @@ function StationManagement() {
 
       if (!response.ok) throw new Error('Failed to save station');
       
+      // Remove temporary marker
+      if (tempMarker) {
+        tempMarker.remove();
+        setTempMarker(null);
+      }
+      
       await loadStations();
       setShowForm(false);
       setEditingStation(null);
-      setFormData({ id: '', nom: '', type: 'Station', latitude: '', longitude: '' });
+      setFormData({ id: '', nom: '', type: 'StationMétro', latitude: '', longitude: '' });
     } catch (err) {
       alert('Error: ' + err.message);
     }
@@ -253,13 +325,24 @@ function StationManagement() {
   const handleEdit = (station) => {
     setEditingStation(station);
     setFormData({
-      id: station.id,
+      id: station.id, // Keep ID hidden but use it for updates
       nom: station.nom || '',
-      type: station.type || 'Station',
+      type: station.type || 'StationMétro',
       latitude: station.latitude || '',
       longitude: station.longitude || ''
     });
     setShowForm(true);
+  };
+
+  const handleCloseForm = () => {
+    // Remove temporary marker when closing form
+    if (tempMarker) {
+      tempMarker.remove();
+      setTempMarker(null);
+    }
+    setShowForm(false);
+    setEditingStation(null);
+    setFormData({ nom: '', type: 'StationMétro', latitude: '', longitude: '' });
   };
 
   if (loading && stations.length === 0) {
@@ -301,9 +384,10 @@ function StationManagement() {
           <button 
             className="add-station-btn"
             onClick={() => {
+              const timestamp = Date.now();
               setShowForm(true);
               setEditingStation(null);
-              setFormData({ id: '', nom: '', type: 'Station', latitude: '', longitude: '' });
+              setFormData({ id: `Station_${timestamp}`, nom: '', type: 'StationMétro', latitude: '', longitude: '' });
             }}
           >
             + Add Station
@@ -319,65 +403,77 @@ function StationManagement() {
       )}
 
       {showForm && (
-        <div className="form-overlay" onClick={() => setShowForm(false)}>
+        <div className="form-overlay" onClick={handleCloseForm}>
           <div className="station-form-container" onClick={(e) => e.stopPropagation()}>
             <div className="form-header">
-              <h2>{editingStation ? 'Edit Station' : 'Add New Station'}</h2>
-              <button className="close-btn" onClick={() => setShowForm(false)}>×</button>
+              <h2>{editingStation ? '✏️ Edit Station' : '➕ Add New Station'}</h2>
+              <button className="close-btn" onClick={handleCloseForm}>×</button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                
-              </div>
-              <div className="form-group">
-                <label>Station Name*</label>
+                <label>🏷️ Station Name*</label>
                 <input
                   type="text"
                   name="nom"
                   value={formData.nom}
                   onChange={(e) => setFormData({...formData, nom: e.target.value})}
                   required
+                  placeholder="e.g., Tunis Marine, Place Barcelone"
+                  autoFocus
                 />
               </div>
               <div className="form-group">
-                <label>Type*</label>
+                <label>Station Type*</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
+                  className="type-select"
                 >
-                  <option value="Station">Station</option>
-                  <option value="BusStation">Bus Station</option>
-                  <option value="MetroStation">Metro Station</option>
+                  <option value="StationMétro">🚇 Metro Station</option>
+                  <option value="StationBus">🚌 Bus Station</option>
+                  <option value="StationTrain">🚆 Train Station</option>
+                  <option value="StationTram">🚊 Tram Station</option>
+                  <option value="Parking">🅿️ Parking</option>
+                  <option value="StationVélo">🚲 Bike Station</option>
+                  <option value="StationTaxi">🚕 Taxi Stand</option>
+                  <option value="Arrêt">🛑 Bus Stop</option>
                 </select>
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Latitude*</label>
+                  <label>📍 Latitude*</label>
                   <input
                     type="number"
                     step="0.000001"
                     value={formData.latitude}
                     onChange={(e) => setFormData({...formData, latitude: e.target.value})}
                     required
+                    placeholder="36.8065"
+                    className="coordinate-input"
                   />
                 </div>
                 <div className="form-group">
-                  <label>Longitude*</label>
+                  <label>📍 Longitude*</label>
                   <input
                     type="number"
                     step="0.000001"
                     value={formData.longitude}
                     onChange={(e) => setFormData({...formData, longitude: e.target.value})}
                     required
+                    placeholder="10.1815"
+                    className="coordinate-input"
                   />
                 </div>
               </div>
+              <div className="coordinate-hint">
+                💡 Click anywhere on the map to automatically fill coordinates
+              </div>
               <div className="form-actions">
-                <button type="button" onClick={() => setShowForm(false)} className="cancel-btn">
-                  Cancel
+                <button type="button" onClick={handleCloseForm} className="cancel-btn">
+                  ✖️ Cancel
                 </button>
                 <button type="submit" className="submit-btn">
-                  {editingStation ? 'Update' : 'Create'}
+                  {editingStation ? '💾 Update Station' : '➕ Create Station'}
                 </button>
               </div>
             </form>
@@ -414,27 +510,40 @@ function StationManagement() {
           <table className="stations-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th>Icon</th>
                 <th>Name</th>
                 <th>Type</th>
-                <th>Latitude</th>
-                <th>Longitude</th>
+                <th>Coordinates</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {stations.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="no-data">No stations found</td>
+                  <td colSpan="5" className="no-data">No stations found</td>
                 </tr>
               ) : (
                 stations.map(station => (
                   <tr key={station.id}>
-                    <td>{station.id}</td>
-                    <td>{station.nom || 'N/A'}</td>
-                    <td>{station.type || 'Station'}</td>
-                    <td>{station.latitude || 'N/A'}</td>
-                    <td>{station.longitude || 'N/A'}</td>
+                    <td style={{ fontSize: '28px', textAlign: 'center' }}>{getStationEmoji(station.type)}</td>
+                    <td style={{ fontWeight: '600', color: '#2c3e50' }}>{station.nom || 'N/A'}</td>
+                    <td>
+                      <span style={{ 
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        color: 'white',
+                        padding: '4px 12px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}>
+                        {station.type || 'Station'}
+                      </span>
+                    </td>
+                    <td style={{ fontFamily: 'monospace', fontSize: '12px', color: '#7f8c8d' }}>
+                      {station.latitude && station.longitude 
+                        ? `${parseFloat(station.latitude).toFixed(4)}, ${parseFloat(station.longitude).toFixed(4)}`
+                        : 'N/A'}
+                    </td>
                     <td>
                       <div className="action-buttons">
                         <button className="edit-btn" onClick={() => handleEdit(station)}>

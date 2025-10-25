@@ -1,5 +1,6 @@
-// StationManagement.js - Module CRUD pour Kenza Ben Slimane
+// StationManagement.js - Station Management with Map Integration
 import React, { useState, useEffect } from 'react';
+import MapPicker from './MapPicker';
 
 const API_URL = 'http://localhost:5001/api';
 
@@ -33,19 +34,63 @@ const StationManagement = ({ onUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Soumission:', formData);
-    alert(editingStation ? 'Station modifiée!' : 'Nouvelle station ajoutée!');
-    closeModal();
-    loadStations();
-    if (onUpdate) onUpdate();
+    setLoading(true);
+
+    try {
+      const endpoint = editingStation 
+        ? `${API_URL}/stations/${editingStation.id}` 
+        : `${API_URL}/stations`;
+      
+      const method = editingStation ? 'PUT' : 'POST';
+
+      const response = await fetch(endpoint, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nom: formData.nom,
+          type: formData.type,
+          latitude: parseFloat(formData.latitude),
+          longitude: parseFloat(formData.longitude)
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        closeModal();
+        loadStations();
+        if (onUpdate) onUpdate();
+      } else {
+        alert('Error: ' + (data.error || 'Failed to save station'));
+      }
+    } catch (error) {
+      console.error('Error saving station:', error);
+      alert('Error saving station');
+    }
+    setLoading(false);
   };
 
   const handleDelete = async (stationId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette station?')) {
-      console.log('Suppression de:', stationId);
-      alert('Station supprimée!');
-      loadStations();
-      if (onUpdate) onUpdate();
+    if (window.confirm('Are you sure you want to delete this station?')) {
+      try {
+        const response = await fetch(`${API_URL}/stations/${stationId}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success || response.ok) {
+          loadStations();
+          if (onUpdate) onUpdate();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to delete station'));
+        }
+      } catch (error) {
+        console.error('Error deleting station:', error);
+        alert('Error deleting station');
+      }
     }
   };
 
@@ -82,31 +127,37 @@ const StationManagement = ({ onUpdate }) => {
   return (
     <div className="crud-container">
       <div className="crud-header">
-        <h2>📍 Gestion des Stations</h2>
+        <div className="module-info-card">
+          <div className="module-icon">📍</div>
+          <div className="module-details">
+            <h2>Station Management</h2>
+            <p>Manage transit hubs, parking facilities, and bike stations</p>
+          </div>
+        </div>
         <button className="btn btn-primary" onClick={() => openModal()}>
-          + Ajouter une Station
+          + Add Station
         </button>
       </div>
 
       <div className="search-bar">
-        <input type="text" placeholder="Rechercher une station..." />
+        <input type="text" placeholder="Search stations..." />
       </div>
 
       {stations.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">📍</div>
-          <h3>Aucune station</h3>
-          <p>Commencez par ajouter votre première station</p>
+          <h3>No Stations</h3>
+          <p>Start by adding your first station location</p>
         </div>
       ) : (
         <table className="data-table">
           <thead>
             <tr>
-              <th>Nom</th>
+              <th>Name</th>
               <th>Type</th>
               <th>Latitude</th>
               <th>Longitude</th>
-              <th>Coordonnées</th>
+              <th>Map</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -127,7 +178,7 @@ const StationManagement = ({ onUpdate }) => {
                       rel="noopener noreferrer"
                       style={{color: '#667eea'}}
                     >
-                      🗺️ Voir sur la carte
+                      🗺️ View on Map
                     </a>
                   ) : '-'}
                 </td>
@@ -136,13 +187,13 @@ const StationManagement = ({ onUpdate }) => {
                     className="btn btn-warning"
                     onClick={() => openModal(station)}
                   >
-                    ✏️ Modifier
+                    ✏️ Edit
                   </button>
                   <button 
                     className="btn btn-danger"
                     onClick={() => handleDelete(station.id)}
                   >
-                    🗑️ Supprimer
+                    🗑️ Delete
                   </button>
                 </td>
               </tr>
@@ -153,7 +204,7 @@ const StationManagement = ({ onUpdate }) => {
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
             <h3>{editingStation ? 'Modifier la station' : 'Nouvelle station'}</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -175,57 +226,65 @@ const StationManagement = ({ onUpdate }) => {
                   required
                 >
                   <option value="StationBus">Station Bus</option>
-                  <option value="StationMétro">Station Métro</option>
+                  <option value="StationMetro">Station Métro</option>
                   <option value="Parking">Parking</option>
-                  <option value="StationVélo">Station Vélo</option>
+                  <option value="StationVelo">Station Vélo</option>
                 </select>
               </div>
 
-              <div className="form-group">
-                <label>Latitude</label>
-                <input
-                  type="number"
-                  step="0.000001"
-                  value={formData.latitude}
-                  onChange={(e) => setFormData({...formData, latitude: e.target.value})}
-                  placeholder="Ex: 36.806495"
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Latitude *</label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={formData.latitude}
+                    onChange={(e) => setFormData({...formData, latitude: e.target.value})}
+                    placeholder="Ex: 36.806495"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Longitude *</label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={formData.longitude}
+                    onChange={(e) => setFormData({...formData, longitude: e.target.value})}
+                    placeholder="Ex: 10.181532"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="form-group">
-                <label>Longitude</label>
-                <input
-                  type="number"
-                  step="0.000001"
-                  value={formData.longitude}
-                  onChange={(e) => setFormData({...formData, longitude: e.target.value})}
-                  placeholder="Ex: 10.181532"
+                <label>📍 Select Location on Map</label>
+                <MapPicker 
+                  onLocationSelect={(coords) => {
+                    setFormData({
+                      ...formData,
+                      latitude: coords.lat,
+                      longitude: coords.lng
+                    });
+                  }}
+                  initialLat={formData.latitude ? parseFloat(formData.latitude) : 36.8065}
+                  initialLng={formData.longitude ? parseFloat(formData.longitude) : 10.1815}
                 />
               </div>
 
               <div className="form-actions">
                 <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                  Annuler
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-success">
-                  {editingStation ? 'Mettre à jour' : 'Créer'}
+                  {editingStation ? 'Update Station' : 'Create Station'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      <div style={{marginTop: '30px', padding: '20px', background: '#f8f9fa', borderRadius: '10px'}}>
-        <h4 style={{marginBottom: '10px', color: '#667eea'}}>📍 Module géré par: Kenza Ben Slimane</h4>
-        <p style={{color: '#666'}}>
-          <strong>Fonctionnalités CRUD:</strong><br/>
-          ✅ Create (Créer) - Ajouter de nouvelles stations<br/>
-          ✅ Read (Lire) - Afficher toutes les stations avec localisation<br/>
-          ✅ Update (Modifier) - Mettre à jour les coordonnées GPS<br/>
-          ✅ Delete (Supprimer) - Supprimer des stations
-        </p>
-      </div>
     </div>
   );
 };

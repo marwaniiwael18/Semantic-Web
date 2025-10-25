@@ -3,6 +3,7 @@ import './App.css';
 import Landing from './components/Landing';
 import Login from './components/Login';
 import Register from './components/Register';
+import UserProfile from './components/UserProfile';
 import UserManagement from './components/UserManagement';
 import TransportManagement from './components/TransportManagement';
 import StationManagement from './components/StationManagement';
@@ -15,6 +16,8 @@ function App() {
   const [currentView, setCurrentView] = useState('landing'); // 'landing', 'login', 'register', 'dashboard'
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalTransports: 0,
@@ -27,8 +30,15 @@ function App() {
     // Check if user is already logged in
     const savedUser = localStorage.getItem('smartcity_user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const userData = JSON.parse(savedUser);
+      setUser(userData);
       setCurrentView('dashboard');
+      
+      // Load profile image
+      const savedImage = localStorage.getItem(`profile_image_${userData.id}`);
+      if (savedImage) {
+        setProfileImage(savedImage);
+      }
     }
   }, []);
 
@@ -71,8 +81,24 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('smartcity_user');
     setUser(null);
+    setProfileImage(null);
     setCurrentView('landing');
     setActiveTab('dashboard');
+  };
+
+  const handleProfileUpdate = (updatedUser) => {
+    setUser(updatedUser);
+    const savedImage = localStorage.getItem(`profile_image_${updatedUser.id}`);
+    if (savedImage) {
+      setProfileImage(savedImage);
+    }
+  };
+
+  const getUserInitials = () => {
+    if (user?.username) {
+      return user.username.substring(0, 2).toUpperCase();
+    }
+    return 'U';
   };
 
   // Landing page view
@@ -102,18 +128,30 @@ function App() {
   // Dashboard view
   return (
     <div className="App">
+      {showProfile && (
+        <UserProfile 
+          user={user}
+          onUpdate={handleProfileUpdate}
+          onClose={() => setShowProfile(false)}
+        />
+      )}
+
       <header className="app-header">
         <div className="header-left">
           <h1>🏙️ Smart City & Mobility</h1>
           <p>Management Dashboard</p>
         </div>
         <div className="header-right">
-          <div className="user-info">
-            <span className="user-avatar">{user?.name?.charAt(0).toUpperCase()}</span>
-            <span className="user-name">{user?.name}</span>
+          <div className="user-info" onClick={() => setShowProfile(true)} style={{ cursor: 'pointer' }}>
+            {profileImage ? (
+              <img src={profileImage} alt="Profile" className="user-avatar-image" />
+            ) : (
+              <span className="user-avatar">{getUserInitials()}</span>
+            )}
+            <span className="user-name">{user?.username}</span>
           </div>
           <button onClick={handleLogout} className="btn btn-secondary btn-logout">
-            Logout
+            🚪 Logout
           </button>
         </div>
       </header>
@@ -122,27 +160,27 @@ function App() {
         <div className="stat-card">
           <h3>{stats.totalUsers}</h3>
           <p>Utilisateurs</p>
-          <small>👤 Yassine Mannai</small>
+          <small>👤 User Management</small>
         </div>
         <div className="stat-card">
           <h3>{stats.totalTransports}</h3>
           <p>Transports</p>
-          <small>🚌 Wael Marouani</small>
+          <small>🚌 Transport System</small>
         </div>
         <div className="stat-card">
           <h3>{stats.totalStations}</h3>
           <p>Stations</p>
-          <small>📍 Kenza Ben Slimane</small>
+          <small>📍 Station Network</small>
         </div>
         <div className="stat-card">
           <h3>{stats.totalEvents}</h3>
           <p>Événements</p>
-          <small>⚠️ Aymen Jallouli</small>
+          <small>⚠️ Traffic Events</small>
         </div>
         <div className="stat-card">
           <h3>{stats.totalZones || 0}</h3>
           <p>Zones</p>
-          <small>🏘️ Nassim Khaldi</small>
+          <small>🏘️ Urban Zones</small>
         </div>
       </div>
 
@@ -157,31 +195,31 @@ function App() {
           className={`tab ${activeTab === 'users' ? 'active' : ''}`}
           onClick={() => setActiveTab('users')}
         >
-          👥 Utilisateurs (Yassine)
+          👥 Users
         </button>
         <button 
           className={`tab ${activeTab === 'transports' ? 'active' : ''}`}
           onClick={() => setActiveTab('transports')}
         >
-          🚌 Transports (Wael)
+          🚌 Transports
         </button>
         <button 
           className={`tab ${activeTab === 'stations' ? 'active' : ''}`}
           onClick={() => setActiveTab('stations')}
         >
-          📍 Stations (Kenza)
+          📍 Stations
         </button>
         <button 
           className={`tab ${activeTab === 'events' ? 'active' : ''}`}
           onClick={() => setActiveTab('events')}
         >
-          ⚠️ Événements (Aymen)
+          ⚠️ Events
         </button>
         <button 
           className={`tab ${activeTab === 'zones' ? 'active' : ''}`}
           onClick={() => setActiveTab('zones')}
         >
-          🏘️ Zones (Nassim)
+          🏘️ Zones
         </button>
       </div>
 
@@ -189,14 +227,14 @@ function App() {
         {activeTab === 'dashboard' && (
           <div className="dashboard-view">
             <div className="welcome-banner">
-              <h2>Welcome back, {user?.name}! 👋</h2>
-              <p>Here's an overview of your Smart City management system</p>
+              <h2>Welcome back, {user?.username}! 👋</h2>
+              <p>Manage your Smart City infrastructure from this central dashboard</p>
             </div>
             
             <div className="dashboard-grid">
               <div className="dashboard-card">
                 <div className="dashboard-card-header">
-                  <h3>📊 System Statistics</h3>
+                  <h3>📊 System Overview</h3>
                 </div>
                 <div className="dashboard-stats">
                   <div className="mini-stat">
@@ -220,42 +258,42 @@ function App() {
 
               <div className="dashboard-card">
                 <div className="dashboard-card-header">
-                  <h3>👥 Team Modules</h3>
+                  <h3>🎯 Quick Access</h3>
                 </div>
                 <div className="team-modules">
                   <div className="module-item" onClick={() => setActiveTab('users')}>
                     <span className="module-icon">👥</span>
                     <div>
                       <strong>User Management</strong>
-                      <p>Yassine Mannai</p>
+                      <p>Manage citizen and tourist accounts</p>
                     </div>
                   </div>
                   <div className="module-item" onClick={() => setActiveTab('transports')}>
                     <span className="module-icon">🚌</span>
                     <div>
                       <strong>Transport Management</strong>
-                      <p>Wael Marouani</p>
+                      <p>Buses, metros, bikes & more</p>
                     </div>
                   </div>
                   <div className="module-item" onClick={() => setActiveTab('stations')}>
                     <span className="module-icon">📍</span>
                     <div>
                       <strong>Station Management</strong>
-                      <p>Kenza Ben Slimane</p>
+                      <p>Transit hubs and parking</p>
                     </div>
                   </div>
                   <div className="module-item" onClick={() => setActiveTab('events')}>
                     <span className="module-icon">⚠️</span>
                     <div>
                       <strong>Event Management</strong>
-                      <p>Aymen Jallouli</p>
+                      <p>Accidents, traffic & construction</p>
                     </div>
                   </div>
                   <div className="module-item" onClick={() => setActiveTab('zones')}>
                     <span className="module-icon">🏘️</span>
                     <div>
                       <strong>Zone Management</strong>
-                      <p>Nassim Khaldi</p>
+                      <p>Urban areas and districts</p>
                     </div>
                   </div>
                 </div>
@@ -285,7 +323,7 @@ function App() {
       </div>
 
       <footer className="app-footer">
-        <p>Chaque membre a son module CRUD complet: Create, Read, Update, Delete</p>
+        <p>Full CRUD operations: Create, Read, Update, Delete</p>
       </footer>
     </div>
   );

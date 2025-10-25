@@ -169,11 +169,11 @@ const TransportManagement = ({ onUpdate }) => {
 
       <div className="crud-header-modern">
         <div>
-          <h2>🚌 Gestion des Transports</h2>
-          <p className="subtitle">Module géré par Wael Marouani</p>
+          <h2>🚌 Transport Management</h2>
+          <p className="subtitle">Manage public transportation fleet</p>
         </div>
         <button className="btn btn-primary btn-modern" onClick={() => openModal()}>
-          <span>➕</span> Ajouter un Transport
+          <span>➕</span> Add Transport
         </button>
       </div>
 
@@ -385,10 +385,10 @@ const TransportManagement = ({ onUpdate }) => {
       )}
 
       <div className="module-info-card">
-        <div className="module-avatar">WM</div>
+        <div className="module-avatar">🚌</div>
         <div className="module-details">
-          <h4>Wael Marouani</h4>
-          <p>Responsable de la gestion des transports</p>
+          <h4>Transport Management</h4>
+          <p>Manage all public transportation vehicles</p>
         </div>
         <div className="module-stats">
           <div className="stat-item">

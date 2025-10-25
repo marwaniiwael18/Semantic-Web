@@ -1061,3 +1061,108 @@ body {
     text-align: center;
   }
 }
+
+/* ==================== USER PROFILE STYLES ==================== */
+
+.profile-modal {
+  max-width: 600px;
+}
+
+.profile-form {
+  padding: 25px;
+}
+
+.profile-image-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 30px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 16px;
+}
+
+.profile-image-container {
+  position: relative;
+}
+
+.profile-image-preview {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 5px solid white;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+
+.profile-image-placeholder {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 700;
+  border: 5px solid white;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+
+.profile-image-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.user-avatar-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.user-info:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+  transition: all 0.3s;
+}
+
+/* Profile Form Enhancements */
+.profile-form h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-form hr {
+  margin: 30px 0;
+  border: none;
+  border-top: 2px solid #e0e0e0;
+}
+
+
+/* Modal Large for Map Integration */
+.modal-large {
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-large {
+    max-width: 95%;
+  }
+}

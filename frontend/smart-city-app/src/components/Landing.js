@@ -157,38 +157,38 @@ const Landing = ({ onGetStarted, onLogin }) => {
       {/* Team Section */}
       <section id="team" className="team-section">
         <div className="container">
-          <h2 className="section-title">Our Team</h2>
-          <p className="section-subtitle">Meet the developers behind this project</p>
+          <h2 className="section-title">Core Modules</h2>
+          <p className="section-subtitle">Comprehensive management system components</p>
           
           <div className="team-grid">
             <div className="team-card">
-              <div className="team-avatar">YM</div>
-              <h3>Yassine Mannai</h3>
-              <p>User Management Module</p>
+              <div className="team-avatar">👥</div>
+              <h3>User Management</h3>
+              <p>Citizen & Tourist Accounts</p>
             </div>
             
             <div className="team-card">
-              <div className="team-avatar">WM</div>
-              <h3>Wael Marouani</h3>
-              <p>Transport Management Module</p>
+              <div className="team-avatar">🚌</div>
+              <h3>Transport Management</h3>
+              <p>Fleet & Vehicle Control</p>
             </div>
             
             <div className="team-card">
-              <div className="team-avatar">KB</div>
-              <h3>Kenza Ben Slimane</h3>
-              <p>Station Management Module</p>
+              <div className="team-avatar">📍</div>
+              <h3>Station Management</h3>
+              <p>Transit Hubs & Parking</p>
             </div>
             
             <div className="team-card">
-              <div className="team-avatar">AJ</div>
-              <h3>Aymen Jallouli</h3>
-              <p>Event Management Module</p>
+              <div className="team-avatar">⚠️</div>
+              <h3>Event Management</h3>
+              <p>Traffic & Incident Tracking</p>
             </div>
             
             <div className="team-card">
-              <div className="team-avatar">NK</div>
-              <h3>Nassim Khaldi</h3>
-              <p>Zone Management Module</p>
+              <div className="team-avatar">🏘️</div>
+              <h3>Zone Management</h3>
+              <p>Urban Areas & Districts</p>
             </div>
           </div>
         </div>
@@ -199,8 +199,8 @@ const Landing = ({ onGetStarted, onLogin }) => {
         <div className="container">
           <div className="footer-content">
             <div className="footer-section">
-              <h4>🏙️ Smart City</h4>
-              <p>Semantic Web Course Project<br />ESPRIT - 5TWIN</p>
+              <h4>🏙️ Smart City & Mobility</h4>
+              <p>Semantic Web Management Platform</p>
             </div>
             
             <div className="footer-section">

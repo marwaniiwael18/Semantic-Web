@@ -12,6 +12,7 @@ from ai_helper import (
     get_smart_city_insights,
     suggest_related_queries
 )
+from cloudinary_helper import upload_profile_image, delete_profile_image, upload_station_image
 
 app = Flask(__name__)
 
@@ -631,6 +632,78 @@ def login():
                 'email': str(user_data[1]) if user_data[1] else '',
                 'age': int(user_data[2]) if user_data[2] else 0
             }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/upload/profile-image', methods=['POST'])
+def upload_user_profile_image():
+    """Upload user profile image to Cloudinary"""
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        image_data = data.get('image_data')
+        
+        if not user_id or not image_data:
+            return jsonify({'success': False, 'error': 'user_id and image_data are required'}), 400
+        
+        # Upload to Cloudinary
+        result = upload_profile_image(image_data, user_id)
+        
+        if 'error' in result:
+            return jsonify({'success': False, 'error': result['error']}), 400
+        
+        # Update user's image URL in RDF
+        from rdflib import Literal, URIRef
+        user_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{user_id}")
+        
+        # Remove old image URL
+        g.remove((user_uri, ONT.ImageURL, None))
+        
+        # Add new image URL
+        g.add((user_uri, ONT.ImageURL, Literal(result['url'])))
+        save_graph()
+        
+        return jsonify({
+            'success': True,
+            'url': result['url'],
+            'public_id': result['public_id']
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/upload/station-image', methods=['POST'])
+def upload_station_image_endpoint():
+    """Upload station image to Cloudinary"""
+    try:
+        data = request.json
+        station_id = data.get('station_id')
+        image_data = data.get('image_data')
+        
+        if not station_id or not image_data:
+            return jsonify({'success': False, 'error': 'station_id and image_data are required'}), 400
+        
+        # Upload to Cloudinary
+        result = upload_station_image(image_data, station_id)
+        
+        if 'error' in result:
+            return jsonify({'success': False, 'error': result['error']}), 400
+        
+        # Update station's image URL in RDF
+        from rdflib import Literal, URIRef
+        station_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{station_id}")
+        
+        # Remove old image URL
+        g.remove((station_uri, ONT.ImageURL, None))
+        
+        # Add new image URL
+        g.add((station_uri, ONT.ImageURL, Literal(result['url'])))
+        save_graph()
+        
+        return jsonify({
+            'success': True,
+            'url': result['url'],
+            'public_id': result['public_id']
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400

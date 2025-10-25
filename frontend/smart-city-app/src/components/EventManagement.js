@@ -1,7 +1,7 @@
 // EventManagement.js - Module CRUD pour Aymen Jallouli
 import React, { useState, useEffect } from 'react';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5001/api';
 
 const EventManagement = ({ onUpdate }) => {
   const [events, setEvents] = useState([]);

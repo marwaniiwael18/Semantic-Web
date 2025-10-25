@@ -14,7 +14,16 @@ from ai_helper import (
 )
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+
+# Configure CORS to allow all origins and methods
+CORS(app, 
+     resources={r"/api/*": {
+         "origins": "*",
+         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         "allow_headers": ["Content-Type", "Authorization"],
+         "expose_headers": ["Content-Type"],
+         "supports_credentials": False
+     }})
 
 # Load RDF ontology
 g = Graph()
@@ -1112,4 +1121,4 @@ def delete_zone(zone_id):
         return jsonify({'error': str(e)}), 400
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001, host='127.0.0.1')

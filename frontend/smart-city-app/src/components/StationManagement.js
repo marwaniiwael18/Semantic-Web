@@ -1,7 +1,7 @@
 // StationManagement.js - Module CRUD pour Kenza Ben Slimane
 import React, { useState, useEffect } from 'react';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5001/api';
 
 const StationManagement = ({ onUpdate }) => {
   const [stations, setStations] = useState([]);

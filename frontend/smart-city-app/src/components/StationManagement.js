@@ -28,6 +28,10 @@ function StationManagement() {
   });
   const [editingStation, setEditingStation] = useState(null);
   const [tempMarker, setTempMarker] = useState(null); // Temporary marker for new station location
+  const [aiRecommendations, setAiRecommendations] = useState([]);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [loadingAI, setLoadingAI] = useState(false);
+  const [recommendationMarkers, setRecommendationMarkers] = useState([]);
 
   // Function to get emoji for station type
   const getStationEmoji = (type) => {
@@ -345,6 +349,114 @@ function StationManagement() {
     setFormData({ nom: '', type: 'StationMétro', latitude: '', longitude: '' });
   };
 
+  const getAIRecommendations = async () => {
+    setLoadingAI(true);
+    try {
+      // Get map center
+      const center = map.current ? map.current.getCenter() : { lat: 36.8065, lng: 10.1815 };
+      
+      const response = await fetch(`${API_URL}/ai/recommend-stations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mapCenter: { lat: center.lat, lng: center.lng }
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.recommendations) {
+        setAiRecommendations(data.recommendations);
+        setShowRecommendations(true);
+        
+        // Clear existing recommendation markers
+        recommendationMarkers.forEach(marker => marker.remove());
+        
+        // Add markers for recommendations
+        const newMarkers = data.recommendations.map((rec, index) => {
+          const el = document.createElement('div');
+          el.className = 'ai-recommendation-marker';
+          el.innerHTML = '✨';
+          el.style.fontSize = '36px';
+          el.style.cursor = 'pointer';
+          el.style.animation = 'pulse 2s ease-in-out infinite';
+          el.style.filter = 'drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))';
+          
+          const marker = new mapboxgl.Marker(el)
+            .setLngLat([rec.longitude, rec.latitude])
+            .setPopup(
+              new mapboxgl.Popup({ offset: 25, maxWidth: '300px' })
+                .setHTML(`
+                  <div style="padding: 16px;">
+                    <h3 style="margin: 0 0 10px 0; color: #667eea; font-size: 18px;">
+                      ${getStationEmoji(rec.type)} ${rec.name}
+                    </h3>
+                    <p style="margin: 8px 0; padding: 8px; background: #f0f0f0; border-radius: 8px; font-size: 13px;">
+                      <strong>Type:</strong> ${rec.type}
+                    </p>
+                    <p style="margin: 8px 0; color: #666; font-size: 13px; line-height: 1.5;">
+                      ${rec.reason}
+                    </p>
+                    <div style="margin-top: 12px; padding: 8px; background: ${
+                      rec.priority === 'high' ? '#ffe6e6' : rec.priority === 'medium' ? '#fff4e6' : '#e6f3ff'
+                    }; border-radius: 6px; text-align: center;">
+                      <strong style="color: ${
+                        rec.priority === 'high' ? '#d32f2f' : rec.priority === 'medium' ? '#f57c00' : '#1976d2'
+                      };">
+                        Priority: ${rec.priority.toUpperCase()}
+                      </strong>
+                    </div>
+                  </div>
+                `)
+            )
+            .addTo(map.current);
+          
+          marker.togglePopup();
+          return marker;
+        });
+        
+        setRecommendationMarkers(newMarkers);
+        
+        // Fly to first recommendation
+        if (data.recommendations.length > 0) {
+          map.current.flyTo({
+            center: [data.recommendations[0].longitude, data.recommendations[0].latitude],
+            zoom: 13,
+            duration: 2000
+          });
+        }
+      } else {
+        alert('Failed to get AI recommendations: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error getting AI recommendations:', error);
+      alert('Error: ' + error.message);
+    } finally {
+      setLoadingAI(false);
+    }
+  };
+
+  const clearRecommendations = () => {
+    recommendationMarkers.forEach(marker => marker.remove());
+    setRecommendationMarkers([]);
+    setAiRecommendations([]);
+    setShowRecommendations(false);
+  };
+
+  const applyRecommendation = (rec) => {
+    const timestamp = Date.now();
+    setFormData({
+      id: `Station_${timestamp}`,
+      nom: rec.name,
+      type: rec.type,
+      latitude: rec.latitude.toFixed(6),
+      longitude: rec.longitude.toFixed(6)
+    });
+    setShowForm(true);
+    setEditingStation(null);
+    clearRecommendations();
+  };
+
   if (loading && stations.length === 0) {
     return (
       <div className="station-management">
@@ -381,6 +493,26 @@ function StationManagement() {
               📋 Table View
             </button>
           </div>
+          <button 
+            className="ai-recommend-btn"
+            onClick={getAIRecommendations}
+            disabled={loadingAI || !mapReady}
+            style={{
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              color: 'white',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '700',
+              cursor: loadingAI ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 15px rgba(245, 87, 108, 0.4)',
+              transition: 'all 0.3s ease',
+              opacity: loadingAI ? 0.7 : 1
+            }}
+          >
+            {loadingAI ? '🤖 Analyzing...' : '✨ AI Recommendations'}
+          </button>
           <button 
             className="add-station-btn"
             onClick={() => {
@@ -503,6 +635,107 @@ function StationManagement() {
           }}
         />
       </div>
+
+      {/* AI Recommendations Panel */}
+      {showRecommendations && aiRecommendations.length > 0 && (
+        <div className="ai-recommendations-panel" style={{
+          position: 'fixed',
+          right: '20px',
+          top: '100px',
+          width: '350px',
+          maxHeight: '80vh',
+          background: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+          overflow: 'auto',
+          zIndex: 1000
+        }}>
+          <div style={{
+            position: 'sticky',
+            top: 0,
+            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            color: 'white',
+            padding: '20px',
+            borderRadius: '16px 16px 0 0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <h3 style={{ margin: 0, fontSize: '18px' }}>✨ AI Recommendations</h3>
+            <button onClick={clearRecommendations} style={{
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              color: 'white',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              fontSize: '20px',
+              fontWeight: 'bold'
+            }}>×</button>
+          </div>
+          
+          <div style={{ padding: '16px' }}>
+            {aiRecommendations.map((rec, index) => (
+              <div key={index} style={{
+                background: '#f8f9fa',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '12px',
+                border: `2px solid ${
+                  rec.priority === 'high' ? '#ff6b6b' : rec.priority === 'medium' ? '#ffa500' : '#4dabf7'
+                }`
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '28px', marginRight: '12px' }}>{getStationEmoji(rec.type)}</span>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '16px', color: '#2c3e50' }}>{rec.name}</h4>
+                    <span style={{
+                      fontSize: '11px',
+                      padding: '3px 8px',
+                      borderRadius: '8px',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      fontWeight: '600'
+                    }}>{rec.type}</span>
+                  </div>
+                </div>
+                
+                <p style={{ fontSize: '13px', color: '#666', lineHeight: '1.6', margin: '10px 0' }}>
+                  {rec.reason}
+                </p>
+                
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  marginTop: '12px'
+                }}>
+                  <span style={{
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: rec.priority === 'high' ? '#d32f2f' : rec.priority === 'medium' ? '#f57c00' : '#1976d2'
+                  }}>
+                    Priority: {rec.priority.toUpperCase()}
+                  </span>
+                  <button onClick={() => applyRecommendation(rec)} style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}>
+                    Add This Station
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Table Section - ALWAYS RENDERED, visibility controlled by CSS */}
       <div style={{ display: viewMode === 'table' ? 'block' : 'none' }}>

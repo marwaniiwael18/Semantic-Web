@@ -12,8 +12,8 @@ if not GEMINI_API_KEY:
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-# Initialize Gemini model
-model = genai.GenerativeModel('gemini-pro')
+# Initialize Gemini model (using free tier - gemini-2.5-flash is the stable free model)
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 def generate_sparql_from_natural_language(user_query):
     """

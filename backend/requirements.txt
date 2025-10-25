@@ -5,3 +5,4 @@ requests==2.31.0
 python-dotenv==1.0.0
 google-generativeai==0.8.5
 cloudinary==1.41.0
+pyparsing==3.0.9

@@ -4,6 +4,7 @@ from rdflib import Graph, Namespace, RDF, RDFS, OWL
 from rdflib.plugins.sparql import prepareQuery
 import os
 import json
+import requests
 from datetime import datetime
 from ai_helper import (
     generate_sparql_from_natural_language,
@@ -1257,6 +1258,180 @@ def delete_zone(zone_id):
         return jsonify({'success': True, 'message': 'Zone deleted successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
+@app.route('/api/ai/recommend-stations', methods=['POST'])
+def recommend_stations():
+    """AI-powered station recommendation using Gemini API"""
+    try:
+        print("🤖 AI Recommendation Request Started")
+        
+        # Get existing stations from the RDF graph
+        query = """
+        PREFIX ont: <http://www.co-ode.org/ontologies/ont.owl#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        
+        SELECT ?station ?nom ?latitude ?longitude ?type
+        WHERE {
+            ?station rdf:type ?stationType .
+            FILTER(?stationType IN (ont:StationMétro, ont:StationBus, ont:Parking))
+            ?station ont:aNomStation ?nom .
+            OPTIONAL { ?station ont:aLatitude ?latitude }
+            OPTIONAL { ?station ont:aLongitude ?longitude }
+            BIND(STRAFTER(STR(?stationType), "#") AS ?type)
+        }
+        """
+        
+        results = g.query(query)
+        existing_stations = []
+        for row in results:
+            existing_stations.append({
+                'name': str(row.nom),
+                'type': str(row.type),
+                'latitude': float(row.latitude) if row.latitude else None,
+                'longitude': float(row.longitude) if row.longitude else None
+            })
+        
+        print(f"📍 Found {len(existing_stations)} existing stations")
+        
+        # Use Gemini to analyze and recommend new station locations
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            print("❌ GEMINI_API_KEY not found in environment")
+            return jsonify({'error': 'GEMINI_API_KEY not configured'}), 500
+        
+        print(f"🔑 API Key found: {api_key[:10]}...")
+        
+        # Prepare the prompt for Gemini
+        prompt = f"""Based on these existing stations in a smart city:
+{existing_stations}
+
+Analyze the coverage and recommend 3 optimal locations for new stations to improve urban mobility.
+For each recommendation, provide:
+1. Station type (StationMétro, StationBus, or Parking)
+2. Suggested name
+3. Approximate latitude and longitude (realistic coordinates for Tunisia/North Africa)
+4. Brief reason for this location
+5. Priority level (high, medium, or low)
+
+Respond ONLY with a valid JSON array in this exact format:
+[
+  {{
+    "type": "StationBus",
+    "name": "Station Name",
+    "latitude": 36.1234,
+    "longitude": 10.5678,
+    "reason": "Brief explanation",
+    "priority": "high"
+  }}
+]
+
+No markdown, no code blocks, just the JSON array."""
+        
+        # Try different API endpoints for Gemini free tier
+        # Based on actual available models from API
+        model_configs = [
+            ('gemini-2.5-flash', 'v1beta'),          # Stable release - BEST FOR FREE TIER
+            ('gemini-2.0-flash', 'v1beta'),          # Also stable
+            ('gemini-flash-latest', 'v1beta'),       # Latest version
+            ('gemini-2.5-flash-lite', 'v1beta'),     # Lighter version
+            ('gemini-2.0-flash-lite', 'v1beta'),     # Lighter 2.0
+        ]
+        
+        response = None
+        last_error = None
+        
+        for model_name, api_version in model_configs:
+            try:
+                print(f"🔄 Trying model: {model_name} with API version: {api_version}")
+                
+                # Call Gemini API with appropriate version
+                url = f'https://generativelanguage.googleapis.com/{api_version}/models/{model_name}:generateContent?key={api_key}'
+                
+                payload = {
+                    "contents": [{
+                        "parts": [{
+                            "text": prompt
+                        }]
+                    }],
+                    "generationConfig": {
+                        "temperature": 0.7,
+                        "maxOutputTokens": 2048,
+                    }
+                }
+                
+                print(f"🌐 Calling: {url[:80]}...")
+                response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=30)
+                
+                print(f"📡 Response status: {response.status_code}")
+                
+                if response.status_code == 200:
+                    print(f"✅ Success with model: {model_name}")
+                    break
+                else:
+                    last_error = f"Model {model_name} returned {response.status_code}: {response.text[:200]}"
+                    print(f"⚠️ {last_error}")
+                    
+            except Exception as e:
+                last_error = f"Model {model_name} failed: {str(e)}"
+                print(f"❌ {last_error}")
+                continue
+        
+        if not response or response.status_code != 200:
+            error_msg = last_error or f'All models failed. Last response: {response.text[:500] if response else "No response"}'
+            print(f"❌ Final error: {error_msg}")
+            return jsonify({
+                'error': 'Gemini API error',
+                'details': error_msg,
+                'status_code': response.status_code if response else 'N/A'
+            }), 500
+        
+        result = response.json()
+        print(f"📦 Got response from Gemini")
+        
+        # Extract the text from Gemini response
+        if 'candidates' in result and len(result['candidates']) > 0:
+            text = result['candidates'][0]['content']['parts'][0]['text']
+            print(f"📝 AI Response length: {len(text)} characters")
+            
+            # Clean up the response (remove markdown if present)
+            text = text.strip()
+            if text.startswith('```json'):
+                text = text.replace('```json', '').replace('```', '').strip()
+            elif text.startswith('```'):
+                text = text.replace('```', '').strip()
+            
+            print(f"🧹 Cleaned response preview: {text[:100]}...")
+            
+            # Parse the JSON recommendations
+            recommendations = json.loads(text)
+            
+            print(f"✅ Successfully parsed {len(recommendations)} recommendations")
+            
+            return jsonify({
+                'success': True,
+                'recommendations': recommendations
+            })
+        else:
+            print(f"❌ No candidates in response: {result}")
+            return jsonify({'error': 'No response from Gemini API', 'details': str(result)}), 500
+            
+    except json.JSONDecodeError as e:
+        error_msg = f"Failed to parse AI response: {str(e)}"
+        print(f"❌ {error_msg}")
+        return jsonify({
+            'error': 'Failed to parse AI response',
+            'details': str(e),
+            'raw_response': text[:500] if 'text' in locals() else 'N/A'
+        }), 500
+    except Exception as e:
+        error_msg = f"Unexpected error: {str(e)}"
+        print(f"❌ {error_msg}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'error': 'Failed to get AI recommendations',
+            'details': str(e)
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001, host='127.0.0.1')

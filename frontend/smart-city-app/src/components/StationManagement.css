@@ -583,3 +583,35 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
 }
 
+/* AI Recommendation Marker */
+.ai-recommendation-marker {
+  cursor: pointer;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+  }
+  50% {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 1));
+  }
+}
+
+/* AI Recommendations Panel Scrollbar */
+.ai-recommendations-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ai-recommendations-panel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.ai-recommendations-panel::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border-radius: 10px;
+}
+

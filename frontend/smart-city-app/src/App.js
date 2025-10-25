@@ -4,6 +4,7 @@ import Landing from './components/Landing';
 import Login from './components/Login';
 import Register from './components/Register';
 import UserProfile from './components/UserProfile';
+import Dashboard from './components/Dashboard';
 import TransportManagement from './components/TransportManagement';
 import StationManagement from './components/StationManagement';
 import EventManagement from './components/EventManagement';
@@ -213,88 +214,11 @@ function App() {
 
       <div className="content">
         {activeTab === 'dashboard' && (
-          <div className="dashboard-view">
-            <div className="welcome-banner">
-              <h2>Welcome back, {user?.username}! 👋</h2>
-              <p>Manage your Smart City infrastructure from this central dashboard</p>
-            </div>
-            
-            <div className="dashboard-grid">
-              <div className="dashboard-card">
-                <div className="dashboard-card-header">
-                  <h3>📊 System Overview</h3>
-                </div>
-                <div className="dashboard-stats">
-                  <div className="mini-stat">
-                    <span className="mini-stat-value">{stats.totalUsers}</span>
-                    <span className="mini-stat-label">Users</span>
-                  </div>
-                  <div className="mini-stat">
-                    <span className="mini-stat-value">{stats.totalTransports}</span>
-                    <span className="mini-stat-label">Transports</span>
-                  </div>
-                  <div className="mini-stat">
-                    <span className="mini-stat-value">{stats.totalStations}</span>
-                    <span className="mini-stat-label">Stations</span>
-                  </div>
-                  <div className="mini-stat">
-                    <span className="mini-stat-value">{stats.totalEvents}</span>
-                    <span className="mini-stat-label">Events</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="dashboard-card">
-                <div className="dashboard-card-header">
-                  <h3>🎯 Quick Access</h3>
-                </div>
-                <div className="team-modules">
-                  <div className="module-item" onClick={() => setActiveTab('transports')}>
-                    <span className="module-icon">🚌</span>
-                    <div>
-                      <strong>Transport Management</strong>
-                      <p>Buses, metros, bikes & more</p>
-                    </div>
-                  </div>
-                  <div className="module-item" onClick={() => setActiveTab('stations')}>
-                    <span className="module-icon">📍</span>
-                    <div>
-                      <strong>Station Management</strong>
-                      <p>Transit hubs and parking</p>
-                    </div>
-                  </div>
-                  <div className="module-item" onClick={() => setActiveTab('events')}>
-                    <span className="module-icon">⚠️</span>
-                    <div>
-                      <strong>Event Management</strong>
-                      <p>Accidents, traffic & construction</p>
-                    </div>
-                  </div>
-                  <div className="module-item" onClick={() => setActiveTab('zones')}>
-                    <span className="module-icon">🏘️</span>
-                    <div>
-                      <strong>Zone Management</strong>
-                      <p>Urban areas and districts</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="dashboard-card">
-                <div className="dashboard-card-header">
-                  <h3>🛠️ Technologies</h3>
-                </div>
-                <div className="tech-badges">
-                  <span className="tech-badge-small">React 18</span>
-                  <span className="tech-badge-small">Python 3.13</span>
-                  <span className="tech-badge-small">Flask 3.0</span>
-                  <span className="tech-badge-small">RDFLib 7.0</span>
-                  <span className="tech-badge-small">SPARQL</span>
-                  <span className="tech-badge-small">Google Gemini AI</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Dashboard 
+            stats={stats} 
+            user={user} 
+            onNavigate={(tab) => setActiveTab(tab)}
+          />
         )}
         {activeTab === 'transports' && <TransportManagement onUpdate={refreshStats} />}
         {activeTab === 'stations' && <StationManagement onUpdate={refreshStats} />}

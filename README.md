@@ -1,6 +1,16 @@
 # 🏙️ Smart City & Mobility - Semantic Web Application
 
-A comprehensive Smart City management platform built with semantic web technologies, featuring real-time CRUD operations, AI-powered natural language queries, and an interactive React frontend.
+A comprehensive Smart City management platform built with semantic web technologies, featuring real-time CRUD operations, AI-powered natural language queries, interactive maps, and a beautiful React frontend.
+
+## ✨ Key Highlights
+
+- 🗺️ **Interactive Mapbox Dashboard** - Real-time visualization of stations and events
+- 🤖 **AI-Powered Insights** - Google Gemini integration for natural language queries
+- 📊 **Beautiful UI/UX** - Modern gradient designs with smooth animations
+- 🔄 **Full CRUD Operations** - Complete Create, Read, Update, Delete for all entities
+- 📱 **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
+- 🖼️ **Image Management** - Cloudinary integration for profile and transport images
+- 🎯 **Real-time Stats** - Live dashboard with system analytics
 
 ## 🎯 Objectives
 
@@ -44,6 +54,7 @@ Semantic-Web/
 │       │   │   ├── Login.js
 │       │   │   ├── Register.js
 │       │   │   ├── UserProfile.js
+│       │   │   ├── Dashboard.js        # Enhanced dashboard with map
 │       │   │   ├── UserManagement.js
 │       │   │   ├── TransportManagement.js
 │       │   │   ├── StationManagement.js
@@ -89,9 +100,11 @@ Semantic-Web/
 
 ### Frontend
 - **React 18** - UI framework
+- **Mapbox GL JS** - Interactive maps
 - **CSS3** - Modern styling with animations
 - **JavaScript ES6+** - Core logic
 - **Fetch API** - REST communication
+- **Cloudinary** - Image storage and delivery
 
 ### Database
 - **RDF/OWL** - Semantic ontology (Projet.rdf)
@@ -124,14 +137,22 @@ source .venv/bin/activate  # On macOS/Linux
 pip install -r backend/requirements.txt
 ```
 
-4. Configure environment variables:
+3. Configure environment variables:
    - Create `backend/.env` with:
 ```env
 GEMINI_API_KEY=your_google_gemini_api_key_here
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 FLASK_ENV=development
 FLASK_DEBUG=True
 FLASK_PORT=5001
 RDF_FILE=../Projet.rdf
+```
+
+   - Create `frontend/smart-city-app/.env` with:
+```env
+REACT_APP_MAPBOX_TOKEN=your_mapbox_gl_token_here
 ```
 
 5. Run the backend:
@@ -244,10 +265,19 @@ See `backend/sparql_queries.md` for 20+ example queries!
 
 ## 🔑 Features
 
+### 📊 Enhanced Dashboard
+- **Interactive Map View** - Mapbox GL visualization of all stations and active events
+- **Real-time Statistics** - Live counters for users, transports, stations, and events
+- **Quick Actions** - Direct navigation to all management modules
+- **Recent Events Feed** - Latest traffic incidents with severity indicators
+- **System Information** - Technology stack overview and AI status
+- **Beautiful Gradients** - Modern purple/blue gradient color scheme
+- **Responsive Layout** - Adapts to any screen size
+
 ### 🎯 Core Modules (Full CRUD)
-- ** Transport Management** - Buses, metros, bikes, shared cars, scooters with image upload
-- **📍 Station Management** - Transit hubs, metro stations, bus stops, parking with interactive map selection
-- **⚠️ Event Management** - Traffic accidents, congestion, construction events
+- **🚌 Transport Management** - Buses, metros, bikes, shared cars, scooters with image upload
+- **📍 Station Management** - Transit hubs with interactive Mapbox map selection and geocoder search
+- **⚠️ Event Management** - Traffic accidents, congestion, construction with image support
 - **🏘️ Zone Management** - Urban areas, city center, suburbs, industrial zones
 - **👤 User Profile** - Profile management with Cloudinary image upload
 
@@ -274,15 +304,19 @@ See `backend/sparql_queries.md` for 20+ example queries!
 - Toast notifications
 
 ### 🎨 UI/UX Features
-- Modern gradient designs
-- Smooth animations (fade-in, hover, float)
-- Interactive filter buttons
-- Loading states
-- Empty state illustrations
-- Mobile-responsive design
-- Image preview and upload
-- Interactive Mapbox integration
-- Dark mode compatible styling
+- **Modern gradient designs** - Purple/blue gradients throughout
+- **Smooth animations** - Fade-in, hover effects, floating animations
+- **Interactive Mapbox maps** - Station management and dashboard visualization
+- **Geocoder search** - Location autocomplete for adding stations
+- **Click-to-add stations** - Interactive map click to place new stations
+- **Image upload & preview** - Profile, transport, and event images
+- **Loading states** - Elegant loading indicators
+- **Empty state illustrations** - Beautiful placeholders for empty data
+- **Mobile-responsive design** - Works on all devices
+- **Toast notifications** - User-friendly feedback
+- **Dark mode compatible** - Modern color palette
+- **Card-based layouts** - Clean, organized interface
+- **Hover effects** - Interactive elements with visual feedback
 
 ## 📈 Project Validation
 

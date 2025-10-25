@@ -84,12 +84,9 @@ const StationManagement = ({ onUpdate }) => {
     loadStations();
   }, [loadStations]);
 
-    useEffect(() => {
-    loadStations();
-  }, [loadStations]);
-
-  // Initialize map once
+  // Initialize map when container is ready and in map view
   useEffect(() => {
+    if (viewMode !== 'map') return;
     if (map.current) return; // Already initialized
     if (!mapContainer.current) return; // Container not ready
     
@@ -98,6 +95,8 @@ const StationManagement = ({ onUpdate }) => {
       return;
     }
 
+    console.log('🗺️ Initializing map...');
+    
     try {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -129,12 +128,23 @@ const StationManagement = ({ onUpdate }) => {
 
       // Mark map as loaded
       map.current.on('load', () => {
+        console.log('✅ Map loaded successfully!');
         setMapLoaded(true);
       });
     } catch (error) {
       console.error('Error initializing map:', error);
     }
-  }, [handleMapClick]);
+
+    // Cleanup when switching away from map view
+    return () => {
+      if (viewMode !== 'map' && map.current) {
+        console.log('🧹 Cleaning up map...');
+        map.current.remove();
+        map.current = null;
+        setMapLoaded(false);
+      }
+    };
+  }, [handleMapClick, viewMode]);
 
   // Resize map when switching to map view
   useEffect(() => {
@@ -387,26 +397,22 @@ const StationManagement = ({ onUpdate }) => {
         </div>
       </div>
 
-      {/* Map View Container - Always in DOM for ref */}
-      <div 
-        style={{
+      {/* Map View - Only render when in map mode */}
+      {viewMode === 'map' && (
+        <div style={{
           marginTop: '20px',
-          position: viewMode === 'map' ? 'relative' : 'absolute',
-          left: viewMode === 'map' ? 'auto' : '-9999px',
+          position: 'relative',
           borderRadius: '16px',
           overflow: 'hidden',
           boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          height: '600px',
-          width: '100%'
-        }}
-      >
-        <div 
-          ref={mapContainer} 
-          style={{width: '100%', height: '600px'}}
-        />
-        
-        {/* Station count badge */}
-        {viewMode === 'map' && (
+          height: '600px'
+        }}>
+          <div 
+            ref={mapContainer} 
+            style={{width: '100%', height: '100%'}}
+          />
+          
+          {/* Station count badge */}
           <div style={{
             position: 'absolute',
             bottom: '20px',
@@ -421,8 +427,8 @@ const StationManagement = ({ onUpdate }) => {
           }}>
             📍 {stations.length} Station{stations.length !== 1 ? 's' : ''}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Table view */}
       {viewMode === 'table' && (

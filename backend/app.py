@@ -14,7 +14,7 @@ from ai_helper import (
 )
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
 # Load RDF ontology
 g = Graph()
@@ -519,6 +519,112 @@ def get_insights():
             "success": False,
             "error": str(e)
         }), 400
+
+# ==================== AUTHENTICATION ====================
+
+@app.route('/api/auth/register', methods=['POST'])
+def register():
+    """Register a new user in the RDF database"""
+    try:
+        from rdflib import Literal, URIRef, XSD
+        data = request.json
+        
+        username = data.get('username', '').strip()
+        email = data.get('email', '').strip()
+        password = data.get('password', '')
+        
+        if not username or not email or not password:
+            return jsonify({'success': False, 'error': 'All fields are required'}), 400
+        
+        # Check if username already exists
+        query = f"""
+        SELECT ?user WHERE {{
+            ?user ont:Nom "{username}" .
+        }}
+        """
+        results = g.query(query)
+        if len(list(results)) > 0:
+            return jsonify({'success': False, 'error': 'Username already exists'}), 400
+        
+        # Check if email already exists
+        query = f"""
+        SELECT ?user WHERE {{
+            ?user ont:Email "{email}" .
+        }}
+        """
+        results = g.query(query)
+        if len(list(results)) > 0:
+            return jsonify({'success': False, 'error': 'Email already exists'}), 400
+        
+        # Create new user
+        user_count = len(list(g.subjects(RDF.type, ONT.Citoyen))) + len(list(g.subjects(RDF.type, ONT.Touriste)))
+        user_id = f"Utilisateur_{user_count + 1}"
+        user_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{user_id}")
+        
+        # Add user triples
+        g.add((user_uri, RDF.type, ONT.Citoyen))
+        g.add((user_uri, ONT.Nom, Literal(username)))
+        g.add((user_uri, ONT.Email, Literal(email)))
+        g.add((user_uri, ONT.MotDePasse, Literal(password)))  # In production, use hashing!
+        g.add((user_uri, ONT.Age, Literal(25, datatype=XSD.decimal)))  # Default age
+        
+        save_graph()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Registration successful',
+            'user': {
+                'id': user_id,
+                'username': username,
+                'email': email
+            }
+        }), 201
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    """Login user by validating credentials against RDF database"""
+    try:
+        data = request.json
+        
+        username = data.get('username', '').strip()
+        password = data.get('password', '')
+        
+        if not username or not password:
+            return jsonify({'success': False, 'error': 'Username and password are required'}), 400
+        
+        # Query for user with matching username and password
+        query = f"""
+        SELECT ?user ?email ?age WHERE {{
+            ?user ont:Nom "{username}" .
+            ?user ont:MotDePasse "{password}" .
+            OPTIONAL {{ ?user ont:Email ?email }}
+            OPTIONAL {{ ?user ont:Age ?age }}
+        }}
+        """
+        results = list(g.query(query))
+        
+        if len(results) == 0:
+            return jsonify({'success': False, 'error': 'Invalid username or password'}), 401
+        
+        # User found
+        user_data = results[0]
+        user_uri = str(user_data[0])
+        user_id = user_uri.split('#')[-1]
+        
+        return jsonify({
+            'success': True,
+            'message': 'Login successful',
+            'user': {
+                'id': user_id,
+                'username': username,
+                'email': str(user_data[1]) if user_data[1] else '',
+                'age': int(user_data[2]) if user_data[2] else 0
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/api/ai/related-queries', methods=['POST'])
 def get_related_queries():

@@ -3,13 +3,13 @@ import '../styles/Auth.css';
 
 const Register = ({ onRegister, onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    role: 'user'
+    confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -19,11 +19,11 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
     setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validation
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
       setError('Please fill in all fields');
       return;
     }
@@ -38,15 +38,42 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
       return;
     }
 
-    // Create user object
-    const user = {
-      name: formData.name,
-      email: formData.email,
-      role: formData.role
-    };
+    setLoading(true);
+    setError('');
 
-    localStorage.setItem('smartcity_user', JSON.stringify(user));
-    onRegister(user);
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Auto-login after successful registration
+        const user = {
+          id: data.user.id,
+          username: data.user.username,
+          email: data.user.email
+        };
+        localStorage.setItem('smartcity_user', JSON.stringify(user));
+        onRegister(user);
+      } else {
+        setError(data.error || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      setError('Unable to connect to server. Please ensure the backend is running.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -61,14 +88,14 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
           {error && <div className="auth-error">{error}</div>}
 
           <div className="form-group">
-            <label htmlFor="name">Full Name</label>
+            <label htmlFor="username">Username</label>
             <input
               type="text"
-              id="name"
-              name="name"
-              value={formData.name}
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
-              placeholder="John Doe"
+              placeholder="Choose a username"
               required
             />
           </div>
@@ -84,20 +111,6 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
               placeholder="you@example.com"
               required
             />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="role">Role</label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-            >
-              <option value="user">City User</option>
-              <option value="admin">Administrator</option>
-              <option value="manager">Transport Manager</option>
-            </select>
           </div>
 
           <div className="form-group">
@@ -133,8 +146,8 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
             </label>
           </div>
 
-          <button type="submit" className="btn btn-primary btn-full">
-            Create Account
+          <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+            {loading ? 'Creating Account...' : 'Create Account'}
           </button>
         </form>
 

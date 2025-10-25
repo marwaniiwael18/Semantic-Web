@@ -3,10 +3,11 @@ import '../styles/Auth.css';
 
 const Login = ({ onLogin, onSwitchToRegister }) => {
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -16,25 +17,51 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
     setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Basic validation
-    if (!formData.email || !formData.password) {
+    if (!formData.username || !formData.password) {
       setError('Please fill in all fields');
       return;
     }
 
-    // For demo purposes, accept any credentials
-    // In production, this would call your backend API
-    const user = {
-      email: formData.email,
-      name: formData.email.split('@')[0],
-      role: 'user'
-    };
+    setLoading(true);
+    setError('');
 
-    localStorage.setItem('smartcity_user', JSON.stringify(user));
-    onLogin(user);
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store user data
+        const user = {
+          id: data.user.id,
+          username: data.user.username,
+          email: data.user.email,
+          age: data.user.age
+        };
+        localStorage.setItem('smartcity_user', JSON.stringify(user));
+        onLogin(user);
+      } else {
+        setError(data.error || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Unable to connect to server. Please ensure the backend is running.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,14 +76,14 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
           {error && <div className="auth-error">{error}</div>}
 
           <div className="form-group">
-            <label htmlFor="email">Email Address</label>
+            <label htmlFor="username">Username</label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
-              placeholder="you@example.com"
+              placeholder="Enter your username"
               required
             />
           </div>
@@ -82,8 +109,8 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
             <a href="#forgot" className="forgot-link">Forgot password?</a>
           </div>
 
-          <button type="submit" className="btn btn-primary btn-full">
-            Sign In
+          <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
@@ -97,7 +124,7 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
         </div>
 
         <div className="demo-credentials">
-          <p><strong>Demo:</strong> Use any email and password to login</p>
+          <p><strong>Demo Account:</strong> Username: Ali | Password: ali123</p>
         </div>
       </div>
     </div>

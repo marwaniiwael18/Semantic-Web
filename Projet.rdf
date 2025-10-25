@@ -752,6 +752,7 @@
         <ont:Age rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">25</ont:Age>
         <ont:Email>ali@gmail.com</ont:Email>
         <ont:Nom>Ali</ont:Nom>
+        <ont:MotDePasse>ali123</ont:MotDePasse>
     </NamedIndividual>
     
 

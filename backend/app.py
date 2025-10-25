@@ -136,7 +136,7 @@ def get_transports():
     PREFIX ont: <http://www.co-ode.org/ontologies/ont.owl#>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     
-    SELECT ?transport ?nom ?type ?capacite ?immat ?vitesse ?electrique ?zone ?energie
+    SELECT ?transport ?nom ?type ?capacite ?immat ?vitesse ?electrique ?zone ?energie ?imageUrl
     WHERE {
         ?transport rdf:type ?transportType .
         ?transportType rdfs:subClassOf* smartcity:Transport .
@@ -149,6 +149,7 @@ def get_transports():
         OPTIONAL { ?transport ont:estElectrique ?electrique }
         OPTIONAL { ?transport smartcity:circuleDans ?zone }
         OPTIONAL { ?transport smartcity:alimentePar ?energie }
+        OPTIONAL { ?transport ont:ImageURL ?imageUrl }
         
         BIND(STRAFTER(STR(?transportType), "#") AS ?type)
     }
@@ -170,7 +171,8 @@ def get_transports():
                 "vitesseMax": int(row.vitesse) if row.vitesse else None,
                 "electrique": bool(row.electrique) if row.electrique else False,
                 "zone": str(row.zone).split('#')[-1] if row.zone else None,
-                "energie": str(row.energie).split('#')[-1] if row.energie else None
+                "energie": str(row.energie).split('#')[-1] if row.energie else None,
+                "imageUrl": str(row.imageUrl) if row.imageUrl else None
             }
     
     return jsonify(list(transport_dict.values()))
@@ -915,6 +917,8 @@ def create_transport():
             g.add((transport_uri, ONT.VitesseMax, Literal(int(data['vitesseMax']), datatype=XSD.decimal)))
         if 'electrique' in data:
             g.add((transport_uri, ONT.estElectrique, Literal(data['electrique'] == 'true', datatype=XSD.boolean)))
+        if data.get('imageUrl'):
+            g.add((transport_uri, ONT.ImageURL, Literal(data['imageUrl'])))
         
         save_graph()
         
@@ -943,6 +947,7 @@ def update_transport(transport_id):
         g.remove((transport_uri, ONT.Immatriculation, None))
         g.remove((transport_uri, ONT.VitesseMax, None))
         g.remove((transport_uri, ONT.estElectrique, None))
+        g.remove((transport_uri, ONT.ImageURL, None))
         
         # Add new properties
         if data.get('nom'):
@@ -955,6 +960,8 @@ def update_transport(transport_id):
             g.add((transport_uri, ONT.VitesseMax, Literal(int(data['vitesseMax']), datatype=XSD.decimal)))
         if 'electrique' in data:
             g.add((transport_uri, ONT.estElectrique, Literal(data['electrique'] == 'true', datatype=XSD.boolean)))
+        if data.get('imageUrl'):
+            g.add((transport_uri, ONT.ImageURL, Literal(data['imageUrl'])))
         
         save_graph()
         

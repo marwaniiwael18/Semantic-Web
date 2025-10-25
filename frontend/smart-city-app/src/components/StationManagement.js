@@ -392,19 +392,21 @@ const StationManagement = ({ onUpdate }) => {
         </div>
       </div>
 
-      {/* Map container - always rendered but hidden when in table view */}
-      <div style={{
-        flex: 1, 
-        position: 'relative', 
-        marginTop: '20px', 
-        borderRadius: '16px', 
-        overflow: 'hidden', 
-        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-        display: viewMode === 'map' ? 'block' : 'none'
-      }}>
+      {/* Map View Container - always in DOM */}
+      <div 
+        style={{
+          marginTop: '20px',
+          position: 'relative',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          height: '600px',
+          display: viewMode === 'map' ? 'block' : 'none'
+        }}
+      >
         <div 
           ref={mapContainer} 
-          style={{width: '100%', height: '600px'}}
+          style={{width: '100%', height: '100%'}}
         />
         
         {/* Station count badge */}

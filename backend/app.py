@@ -541,5 +541,469 @@ def get_related_queries():
             "error": str(e)
         }), 400
 
+# ==================== CRUD OPERATIONS ====================
+
+def save_graph():
+    """Helper function to save the graph to RDF file"""
+    try:
+        g.serialize(destination=rdf_file, format='xml')
+        return True
+    except Exception as e:
+        print(f"Error saving graph: {e}")
+        return False
+
+# ========== USER CRUD ==========
+@app.route('/api/users', methods=['POST'])
+def create_user():
+    """Create a new user"""
+    try:
+        from rdflib import Literal, URIRef, XSD
+        data = request.json
+        
+        # Generate unique ID
+        user_count = len(list(g.subjects(RDF.type, ONT.Citoyen))) + len(list(g.subjects(RDF.type, ONT.Touriste)))
+        user_id = f"Utilisateur_{user_count + 1}"
+        user_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{user_id}")
+        
+        # Determine user type
+        user_type = ONT.Citoyen if data.get('type') == 'Citoyen' else ONT.Touriste
+        
+        # Add triples
+        g.add((user_uri, RDF.type, user_type))
+        g.add((user_uri, ONT.Nom, Literal(data['nom'])))
+        g.add((user_uri, ONT.Age, Literal(int(data['age']), datatype=XSD.decimal)))
+        g.add((user_uri, ONT.Email, Literal(data['email'])))
+        
+        if data.get('carteAbonnement'):
+            g.add((user_uri, ONT.CarteAbonnement, Literal(data['carteAbonnement'] == 'true', datatype=XSD.boolean)))
+        
+        # Save to file
+        save_graph()
+        
+        return jsonify({
+            'success': True,
+            'message': 'User created successfully',
+            'id': user_id
+        }), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/users/<user_id>', methods=['PUT'])
+def update_user(user_id):
+    """Update an existing user"""
+    try:
+        from rdflib import Literal, URIRef, XSD
+        data = request.json
+        user_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{user_id}")
+        
+        # Check if user exists
+        if not (user_uri, RDF.type, None) in g:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Remove old properties
+        g.remove((user_uri, ONT.Nom, None))
+        g.remove((user_uri, ONT.Age, None))
+        g.remove((user_uri, ONT.Email, None))
+        g.remove((user_uri, ONT.CarteAbonnement, None))
+        
+        # Add new properties
+        g.add((user_uri, ONT.Nom, Literal(data['nom'])))
+        g.add((user_uri, ONT.Age, Literal(int(data['age']), datatype=XSD.decimal)))
+        g.add((user_uri, ONT.Email, Literal(data['email'])))
+        
+        if data.get('carteAbonnement'):
+            g.add((user_uri, ONT.CarteAbonnement, Literal(data['carteAbonnement'] == 'true', datatype=XSD.boolean)))
+        
+        save_graph()
+        
+        return jsonify({'success': True, 'message': 'User updated successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/users/<user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    """Delete a user"""
+    try:
+        from rdflib import URIRef
+        user_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{user_id}")
+        
+        # Check if user exists
+        if not (user_uri, RDF.type, None) in g:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Remove all triples related to this user
+        g.remove((user_uri, None, None))
+        g.remove((None, None, user_uri))
+        
+        save_graph()
+        
+        return jsonify({'success': True, 'message': 'User deleted successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# ========== TRANSPORT CRUD ==========
+@app.route('/api/transports', methods=['POST'])
+def create_transport():
+    """Create a new transport"""
+    try:
+        from rdflib import Literal, URIRef, XSD
+        data = request.json
+        
+        # Generate unique ID
+        transport_count = len(list(g.subjects(RDF.type, ONT.Bus))) + len(list(g.subjects(RDF.type, ONT.Métro)))
+        transport_id = f"{data.get('type', 'Transport')}_{transport_count + 1}"
+        transport_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{transport_id}")
+        
+        # Determine transport type
+        type_map = {
+            'Bus': ONT.Bus,
+            'Métro': ONT.Métro,
+            'Vélo': ONT.Vélo,
+            'VoiturePartagée': ONT.VoiturePartagée,
+            'Trottinette': ONT.Trottinette
+        }
+        transport_type = type_map.get(data.get('type'), ONT.Bus)
+        
+        # Add triples
+        g.add((transport_uri, RDF.type, transport_type))
+        if data.get('nom'):
+            g.add((transport_uri, ONT.Nom, Literal(data['nom'])))
+        if data.get('capacite'):
+            g.add((transport_uri, ONT.Capacite, Literal(int(data['capacite']), datatype=XSD.decimal)))
+        if data.get('immatriculation'):
+            g.add((transport_uri, ONT.Immatriculation, Literal(data['immatriculation'])))
+        if data.get('vitesseMax'):
+            g.add((transport_uri, ONT.VitesseMax, Literal(int(data['vitesseMax']), datatype=XSD.decimal)))
+        if 'electrique' in data:
+            g.add((transport_uri, ONT.estElectrique, Literal(data['electrique'] == 'true', datatype=XSD.boolean)))
+        
+        save_graph()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Transport created successfully',
+            'id': transport_id
+        }), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/transports/<transport_id>', methods=['PUT'])
+def update_transport(transport_id):
+    """Update an existing transport"""
+    try:
+        from rdflib import Literal, URIRef, XSD
+        data = request.json
+        transport_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{transport_id}")
+        
+        if not (transport_uri, RDF.type, None) in g:
+            return jsonify({'error': 'Transport not found'}), 404
+        
+        # Remove old properties
+        g.remove((transport_uri, ONT.Nom, None))
+        g.remove((transport_uri, ONT.Capacite, None))
+        g.remove((transport_uri, ONT.Immatriculation, None))
+        g.remove((transport_uri, ONT.VitesseMax, None))
+        g.remove((transport_uri, ONT.estElectrique, None))
+        
+        # Add new properties
+        if data.get('nom'):
+            g.add((transport_uri, ONT.Nom, Literal(data['nom'])))
+        if data.get('capacite'):
+            g.add((transport_uri, ONT.Capacite, Literal(int(data['capacite']), datatype=XSD.decimal)))
+        if data.get('immatriculation'):
+            g.add((transport_uri, ONT.Immatriculation, Literal(data['immatriculation'])))
+        if data.get('vitesseMax'):
+            g.add((transport_uri, ONT.VitesseMax, Literal(int(data['vitesseMax']), datatype=XSD.decimal)))
+        if 'electrique' in data:
+            g.add((transport_uri, ONT.estElectrique, Literal(data['electrique'] == 'true', datatype=XSD.boolean)))
+        
+        save_graph()
+        
+        return jsonify({'success': True, 'message': 'Transport updated successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/transports/<transport_id>', methods=['DELETE'])
+def delete_transport(transport_id):
+    """Delete a transport"""
+    try:
+        from rdflib import URIRef
+        transport_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{transport_id}")
+        
+        if not (transport_uri, RDF.type, None) in g:
+            return jsonify({'error': 'Transport not found'}), 404
+        
+        g.remove((transport_uri, None, None))
+        g.remove((None, None, transport_uri))
+        
+        save_graph()
+        
+        return jsonify({'success': True, 'message': 'Transport deleted successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# ========== STATION CRUD ==========
+@app.route('/api/stations', methods=['POST'])
+def create_station():
+    """Create a new station"""
+    try:
+        from rdflib import Literal, URIRef, XSD
+        data = request.json
+        
+        station_count = len(list(g.subjects(RDF.type, ONT.StationBus))) + len(list(g.subjects(RDF.type, ONT.StationMétro)))
+        station_id = f"Station_{station_count + 1}"
+        station_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{station_id}")
+        
+        # Determine station type
+        type_map = {
+            'StationBus': ONT.StationBus,
+            'StationMétro': ONT.StationMétro,
+            'Parking': ONT.Parking
+        }
+        station_type = type_map.get(data.get('type'), ONT.StationBus)
+        
+        g.add((station_uri, RDF.type, station_type))
+        if data.get('nom'):
+            g.add((station_uri, ONT.aNomStation, Literal(data['nom'])))
+        if data.get('latitude'):
+            g.add((station_uri, ONT.aLatitude, Literal(float(data['latitude']), datatype=XSD.decimal)))
+        if data.get('longitude'):
+            g.add((station_uri, ONT.aLongitude, Literal(float(data['longitude']), datatype=XSD.decimal)))
+        
+        save_graph()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Station created successfully',
+            'id': station_id
+        }), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/stations/<station_id>', methods=['PUT'])
+def update_station(station_id):
+    """Update an existing station"""
+    try:
+        from rdflib import Literal, URIRef, XSD
+        data = request.json
+        station_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{station_id}")
+        
+        if not (station_uri, RDF.type, None) in g:
+            return jsonify({'error': 'Station not found'}), 404
+        
+        g.remove((station_uri, ONT.aNomStation, None))
+        g.remove((station_uri, ONT.aLatitude, None))
+        g.remove((station_uri, ONT.aLongitude, None))
+        
+        if data.get('nom'):
+            g.add((station_uri, ONT.aNomStation, Literal(data['nom'])))
+        if data.get('latitude'):
+            g.add((station_uri, ONT.aLatitude, Literal(float(data['latitude']), datatype=XSD.decimal)))
+        if data.get('longitude'):
+            g.add((station_uri, ONT.aLongitude, Literal(float(data['longitude']), datatype=XSD.decimal)))
+        
+        save_graph()
+        
+        return jsonify({'success': True, 'message': 'Station updated successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/stations/<station_id>', methods=['DELETE'])
+def delete_station(station_id):
+    """Delete a station"""
+    try:
+        from rdflib import URIRef
+        station_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{station_id}")
+        
+        if not (station_uri, RDF.type, None) in g:
+            return jsonify({'error': 'Station not found'}), 404
+        
+        g.remove((station_uri, None, None))
+        g.remove((None, None, station_uri))
+        
+        save_graph()
+        
+        return jsonify({'success': True, 'message': 'Station deleted successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# ========== EVENT CRUD ==========
+@app.route('/api/events', methods=['POST'])
+def create_event():
+    """Create a new event"""
+    try:
+        from rdflib import Literal, URIRef, XSD
+        data = request.json
+        
+        event_count = len(list(g.subjects(RDF.type, ONT.Accident))) + len(list(g.subjects(RDF.type, ONT.Embouteillage)))
+        event_id = f"{data.get('type', 'Event')}_{event_count + 1}"
+        event_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{event_id}")
+        
+        type_map = {
+            'Accident': ONT.Accident,
+            'Embouteillage': ONT.Embouteillage,
+            'Travaux': SMARTCITY.EvenementDeCirculation  # Generic type for construction
+        }
+        event_type = type_map.get(data.get('type'), ONT.Accident)
+        
+        g.add((event_uri, RDF.type, event_type))
+        if data.get('nom'):
+            g.add((event_uri, ONT.Nom, Literal(data['nom'])))
+        if data.get('description'):
+            g.add((event_uri, ONT.aDescription, Literal(data['description'])))
+        if data.get('gravite'):
+            g.add((event_uri, ONT.aGravite, Literal(int(data['gravite']), datatype=XSD.int)))
+        if data.get('date'):
+            g.add((event_uri, ONT.aDateEvenement, Literal(data['date'], datatype=XSD.dateTime)))
+        
+        save_graph()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Event created successfully',
+            'id': event_id
+        }), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/events/<event_id>', methods=['PUT'])
+def update_event(event_id):
+    """Update an existing event"""
+    try:
+        from rdflib import Literal, URIRef, XSD
+        data = request.json
+        event_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{event_id}")
+        
+        if not (event_uri, RDF.type, None) in g:
+            return jsonify({'error': 'Event not found'}), 404
+        
+        g.remove((event_uri, ONT.Nom, None))
+        g.remove((event_uri, ONT.aDescription, None))
+        g.remove((event_uri, ONT.aGravite, None))
+        g.remove((event_uri, ONT.aDateEvenement, None))
+        
+        if data.get('nom'):
+            g.add((event_uri, ONT.Nom, Literal(data['nom'])))
+        if data.get('description'):
+            g.add((event_uri, ONT.aDescription, Literal(data['description'])))
+        if data.get('gravite'):
+            g.add((event_uri, ONT.aGravite, Literal(int(data['gravite']), datatype=XSD.int)))
+        if data.get('date'):
+            g.add((event_uri, ONT.aDateEvenement, Literal(data['date'], datatype=XSD.dateTime)))
+        
+        save_graph()
+        
+        return jsonify({'success': True, 'message': 'Event updated successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/events/<event_id>', methods=['DELETE'])
+def delete_event(event_id):
+    """Delete an event"""
+    try:
+        from rdflib import URIRef
+        event_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{event_id}")
+        
+        if not (event_uri, RDF.type, None) in g:
+            return jsonify({'error': 'Event not found'}), 404
+        
+        g.remove((event_uri, None, None))
+        g.remove((None, None, event_uri))
+        
+        save_graph()
+        
+        return jsonify({'success': True, 'message': 'Event deleted successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# ========== ZONE CRUD ==========
+@app.route('/api/zones', methods=['POST'])
+def create_zone():
+    """Create a new zone"""
+    try:
+        from rdflib import Literal, URIRef, XSD
+        data = request.json
+        
+        zone_count = len(list(g.subjects(RDF.type, ONT.CentreVille))) + len(list(g.subjects(RDF.type, ONT.Banlieue)))
+        zone_id = f"Zone_{zone_count + 1}"
+        zone_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{zone_id}")
+        
+        type_map = {
+            'CentreVille': ONT.CentreVille,
+            'Banlieue': ONT.Banlieue,
+            'ZoneIndustrielle': ONT.ZoneIndustrielle
+        }
+        zone_type = type_map.get(data.get('type'), ONT.CentreVille)
+        
+        g.add((zone_uri, RDF.type, zone_type))
+        if data.get('nom'):
+            g.add((zone_uri, ONT.Nom, Literal(data['nom'])))
+        if data.get('superficie'):
+            g.add((zone_uri, ONT.Superficie, Literal(float(data['superficie']), datatype=XSD.decimal)))
+        if data.get('population'):
+            g.add((zone_uri, ONT.Population, Literal(int(data['population']), datatype=XSD.int)))
+        if data.get('description'):
+            g.add((zone_uri, ONT.aDescription, Literal(data['description'])))
+        
+        save_graph()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Zone created successfully',
+            'id': zone_id
+        }), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/zones/<zone_id>', methods=['PUT'])
+def update_zone(zone_id):
+    """Update an existing zone"""
+    try:
+        from rdflib import Literal, URIRef, XSD
+        data = request.json
+        zone_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{zone_id}")
+        
+        if not (zone_uri, RDF.type, None) in g:
+            return jsonify({'error': 'Zone not found'}), 404
+        
+        g.remove((zone_uri, ONT.Nom, None))
+        g.remove((zone_uri, ONT.Superficie, None))
+        g.remove((zone_uri, ONT.Population, None))
+        g.remove((zone_uri, ONT.aDescription, None))
+        
+        if data.get('nom'):
+            g.add((zone_uri, ONT.Nom, Literal(data['nom'])))
+        if data.get('superficie'):
+            g.add((zone_uri, ONT.Superficie, Literal(float(data['superficie']), datatype=XSD.decimal)))
+        if data.get('population'):
+            g.add((zone_uri, ONT.Population, Literal(int(data['population']), datatype=XSD.int)))
+        if data.get('description'):
+            g.add((zone_uri, ONT.aDescription, Literal(data['description'])))
+        
+        save_graph()
+        
+        return jsonify({'success': True, 'message': 'Zone updated successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/zones/<zone_id>', methods=['DELETE'])
+def delete_zone(zone_id):
+    """Delete a zone"""
+    try:
+        from rdflib import URIRef
+        zone_uri = URIRef(f"http://www.co-ode.org/ontologies/ont.owl#{zone_id}")
+        
+        if not (zone_uri, RDF.type, None) in g:
+            return jsonify({'error': 'Zone not found'}), 404
+        
+        g.remove((zone_uri, None, None))
+        g.remove((None, None, zone_uri))
+        
+        save_graph()
+        
+        return jsonify({'success': True, 'message': 'Zone deleted successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

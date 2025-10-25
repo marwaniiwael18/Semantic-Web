@@ -1,5 +1,5 @@
 // StationManagement.js - Station Management with Full Interactive Map
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
@@ -29,50 +29,124 @@ const StationManagement = ({ onUpdate }) => {
   const map = useRef(null);
   const markers = useRef([]);
   const tempMarker = useRef(null);
+  const addModeRef = useRef(false);
+
+  const getStationIcon = useCallback((type) => {
+    switch(type) {
+      case 'StationBus': return '🚌';
+      case 'StationMétro': return '🚇';
+      case 'Parking': return '🅿️';
+      default: return '📍';
+    }
+  }, []);
+
+  const handleMapClick = useCallback((lng, lat) => {
+    // Remove temporary marker if exists
+    if (tempMarker.current) {
+      tempMarker.current.remove();
+    }
+
+    // Add temporary marker
+    const el = document.createElement('div');
+    el.className = 'temp-station-marker';
+    el.innerHTML = '📍';
+    el.style.fontSize = '40px';
+
+    tempMarker.current = new mapboxgl.Marker(el)
+      .setLngLat([lng, lat])
+      .addTo(map.current);
+
+    // Set location and show modal
+    setSelectedLocation({ lng, lat });
+    setFormData(prev => ({
+      ...prev,
+      latitude: lat.toFixed(6),
+      longitude: lng.toFixed(6)
+    }));
+    setShowModal(true);
+    setAddMode(false);
+  }, []);
+
+  const loadStations = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/stations`);
+      const data = await response.json();
+      setStations(data);
+    } catch (error) {
+      console.error('Error loading stations:', error);
+    }
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     loadStations();
-  }, []);
+  }, [loadStations]);
 
-  // Initialize map
+  // Initialize map only when in map view
   useEffect(() => {
-    if (map.current) return; // Initialize map only once
+    if (viewMode !== 'map') return; // Only initialize when map view is active
+    if (map.current) return; // Map already initialized
+    if (!mapContainer.current) return; // Wait for container to be ready
     
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [10.1815, 36.8065], // Tunis
-      zoom: 11
-    });
+    // Check if Mapbox token is set
+    if (!MAPBOX_TOKEN) {
+      console.error('Mapbox token is not set. Please add REACT_APP_MAPBOX_TOKEN to your .env file');
+      return;
+    }
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    // Small delay to ensure DOM is fully ready
+    const initMap = () => {
+      try {
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: [10.1815, 36.8065], // Tunis
+          zoom: 11
+        });
 
-    // Add geocoder (search box)
-    const geocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
-      mapboxgl: mapboxgl,
-      marker: false,
-      placeholder: 'Search for a location...'
-    });
-    
-    map.current.addControl(geocoder, 'top-left');
+        // Add navigation controls
+        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // Handle map click for adding stations
-    map.current.on('click', (e) => {
-      if (addMode) {
-        const { lng, lat } = e.lngLat;
-        handleMapClick(lng, lat);
+        // Add geocoder (search box)
+        const geocoder = new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl,
+          marker: false,
+          placeholder: 'Search for a location...'
+        });
+        
+        map.current.addControl(geocoder, 'top-left');
+
+        // Handle map click for adding stations
+        map.current.on('click', (e) => {
+          if (addModeRef.current) {
+            const { lng, lat } = e.lngLat;
+            handleMapClick(lng, lat);
+          }
+        });
+
+        // Resize map when loaded
+        map.current.on('load', () => {
+          map.current.resize();
+        });
+      } catch (error) {
+        console.error('Error initializing map:', error);
       }
-    });
+    };
+
+    // Use setTimeout to ensure DOM is ready
+    const timeoutId = setTimeout(initMap, 100);
 
     return () => {
+      clearTimeout(timeoutId);
       if (map.current) {
         map.current.remove();
         map.current = null;
       }
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode]);
 
   // Update markers when stations change
   useEffect(() => {
@@ -122,55 +196,7 @@ const StationManagement = ({ onUpdate }) => {
         markers.current.push(marker);
       }
     });
-  }, [stations]);
-
-  const handleMapClick = (lng, lat) => {
-    // Remove temporary marker if exists
-    if (tempMarker.current) {
-      tempMarker.current.remove();
-    }
-
-    // Add temporary marker
-    const el = document.createElement('div');
-    el.className = 'temp-station-marker';
-    el.innerHTML = '📍';
-    el.style.fontSize = '40px';
-
-    tempMarker.current = new mapboxgl.Marker(el)
-      .setLngLat([lng, lat])
-      .addTo(map.current);
-
-    // Set location and show modal
-    setSelectedLocation({ lng, lat });
-    setFormData({
-      ...formData,
-      latitude: lat.toFixed(6),
-      longitude: lng.toFixed(6)
-    });
-    setShowModal(true);
-    setAddMode(false);
-  };
-
-  const getStationIcon = (type) => {
-    switch(type) {
-      case 'StationBus': return '🚌';
-      case 'StationMétro': return '🚇';
-      case 'Parking': return '🅿️';
-      default: return '📍';
-    }
-  };
-
-  const loadStations = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/stations`);
-      const data = await response.json();
-      setStations(data);
-    } catch (error) {
-      console.error('Error loading stations:', error);
-    }
-    setLoading(false);
-  };
+  }, [stations, getStationIcon]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -235,32 +261,37 @@ const StationManagement = ({ onUpdate }) => {
     }
   };
 
-  const openModal = (station = null) => {
-    if (station) {
-      setEditingStation(station);
-      setFormData({
-        nom: station.nom,
-        type: station.type,
-        latitude: station.latitude || '',
-        longitude: station.longitude || ''
-      });
-    } else {
-      setEditingStation(null);
-      setFormData({
-        nom: '',
-        type: 'StationBus',
-        latitude: '',
-        longitude: ''
-      });
-    }
-    setShowModal(true);
-  };
+  // Reserved for future use - currently using window.editStation
+  // const openModal = (station = null) => {
+  //   if (station) {
+  //     setEditingStation(station);
+  //     setFormData({
+  //       nom: station.nom,
+  //       type: station.type,
+  //       latitude: station.latitude || '',
+  //       longitude: station.longitude || ''
+  //     });
+  //   } else {
+  //     setEditingStation(null);
+  //     setFormData({
+  //       nom: '',
+  //       type: 'StationBus',
+  //       latitude: '',
+  //       longitude: ''
+  //     });
+  //   }
+  //   setShowModal(true);
+  // };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingStation(null);
     setSelectedLocation(null);
     setAddMode(false);
+    addModeRef.current = false;
+    if (map.current) {
+      map.current.getCanvas().style.cursor = '';
+    }
     if (tempMarker.current) {
       tempMarker.current.remove();
       tempMarker.current = null;
@@ -269,11 +300,19 @@ const StationManagement = ({ onUpdate }) => {
 
   const startAddMode = () => {
     setAddMode(true);
+    addModeRef.current = true;
+    if (map.current) {
+      map.current.getCanvas().style.cursor = 'crosshair';
+    }
     alert('📍 Click anywhere on the map to add a new station');
   };
 
   const cancelAddMode = () => {
     setAddMode(false);
+    addModeRef.current = false;
+    if (map.current) {
+      map.current.getCanvas().style.cursor = '';
+    }
     if (tempMarker.current) {
       tempMarker.current.remove();
       tempMarker.current = null;
@@ -304,6 +343,7 @@ const StationManagement = ({ onUpdate }) => {
       delete window.editStation;
       delete window.deleteStation;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stations]);
 
   if (loading && stations.length === 0) {
@@ -333,7 +373,7 @@ const StationManagement = ({ onUpdate }) => {
           ) : (
             <>
               <button className="btn btn-success" onClick={startAddMode}>
-                📍 Add Station on Map
+                ➕ Add Station on Map
               </button>
               <button 
                 className="btn btn-primary" 

@@ -11,6 +11,7 @@ const TransportManagement = ({ onUpdate }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  // eslint-disable-next-line no-unused-vars
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
@@ -24,6 +25,7 @@ const TransportManagement = ({ onUpdate }) => {
 
   useEffect(() => {
     loadTransports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const showNotification = (message, type = 'success') => {

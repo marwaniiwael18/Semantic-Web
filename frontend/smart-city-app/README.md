@@ -4,15 +4,6 @@
 
 A modern web application for managing smart city resources including users, transports, stations, events, and urban zones.
 
-## 👥 Team Members & Module Assignments
-
-| Team Member | Module | Responsibility |
-|------------|--------|----------------|
-| **Yassine Mannai** | User Management | CRUD operations for city users and subscribers |
-| **Wael Marouani** | Transport Management | CRUD operations for buses, metros, bikes, etc. |
-| **Kenza Ben Slimane** | Station Management | CRUD operations for transport stations |
-| **Aymen Jallouli** | Event Management | CRUD operations for traffic events |
-| **Nassim Khaldi** | Zone Management | CRUD operations for urban zones |
 
 ## 🛠️ Technologies Used
 
@@ -88,17 +79,17 @@ Each module provides:
 - ✏️ **Update**: Edit existing entities
 - 🗑️ **Delete**: Remove entities with confirmation
 
-### User Management (Yassine)
+### User Management 
 - Manage city users and subscribers
 - Fields: Name, Age, Email, Type, Subscription Card
 - User types: Resident, Tourist, Commuter
 
-### Transport Management (Wael)
+### Transport Management 
 - Manage transport vehicles
 - Fields: Name, Type, Capacity, Registration, Max Speed, Electric
 - Types: Bus, Metro, Bike, Shared Car, Scooter
 
-### Station Management (Kenza)
+### Station Management 
 - Manage transport stations
 - Fields: Name, Type, GPS Coordinates
 - Google Maps integration links
@@ -223,11 +214,11 @@ This project is created for academic purposes - Semantic Web course.
 
 ## 👨‍💻 Contributors
 
-- Yassine Mannai - User Management
-- Wael Marouani - Transport Management
-- Kenza Ben Slimane - Station Management
-- Aymen Jallouli - Event Management
-- Nassim Khaldi - Zone Management
+- Yassine Mannai 
+- Wael Marouani 
+- Kenza Ben Slimane 
+- Aymen Jallouli 
+- Nassim Khaldi 
 
 ---
 

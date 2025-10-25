@@ -1166,3 +1166,57 @@ body {
     max-width: 95%;
   }
 }
+
+/* Transport Image Styles */
+.transport-card-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
+  margin-bottom: 15px;
+}
+
+.transport-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-upload-section {
+  margin: 15px 0;
+}
+
+.image-preview-container {
+  text-align: center;
+}
+
+.transport-image-preview {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.image-upload-placeholder {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.image-upload-placeholder:hover {
+  border-color: #667eea;
+  background: #f8f9ff;
+}
+
+.upload-label {
+  cursor: pointer;
+  display: block;
+}
+
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}

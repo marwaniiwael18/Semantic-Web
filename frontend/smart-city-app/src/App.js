@@ -4,7 +4,6 @@ import Landing from './components/Landing';
 import Login from './components/Login';
 import Register from './components/Register';
 import UserProfile from './components/UserProfile';
-import UserManagement from './components/UserManagement';
 import TransportManagement from './components/TransportManagement';
 import StationManagement from './components/StationManagement';
 import EventManagement from './components/EventManagement';
@@ -158,11 +157,6 @@ function App() {
 
       <div className="stats-container">
         <div className="stat-card">
-          <h3>{stats.totalUsers}</h3>
-          <p>Utilisateurs</p>
-          <small>👤 User Management</small>
-        </div>
-        <div className="stat-card">
           <h3>{stats.totalTransports}</h3>
           <p>Transports</p>
           <small>🚌 Transport System</small>
@@ -190,12 +184,6 @@ function App() {
           onClick={() => setActiveTab('dashboard')}
         >
           📊 Dashboard
-        </button>
-        <button 
-          className={`tab ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => setActiveTab('users')}
-        >
-          👥 Users
         </button>
         <button 
           className={`tab ${activeTab === 'transports' ? 'active' : ''}`}
@@ -261,13 +249,6 @@ function App() {
                   <h3>🎯 Quick Access</h3>
                 </div>
                 <div className="team-modules">
-                  <div className="module-item" onClick={() => setActiveTab('users')}>
-                    <span className="module-icon">👥</span>
-                    <div>
-                      <strong>User Management</strong>
-                      <p>Manage citizen and tourist accounts</p>
-                    </div>
-                  </div>
                   <div className="module-item" onClick={() => setActiveTab('transports')}>
                     <span className="module-icon">🚌</span>
                     <div>
@@ -315,7 +296,6 @@ function App() {
             </div>
           </div>
         )}
-        {activeTab === 'users' && <UserManagement onUpdate={refreshStats} />}
         {activeTab === 'transports' && <TransportManagement onUpdate={refreshStats} />}
         {activeTab === 'stations' && <StationManagement onUpdate={refreshStats} />}
         {activeTab === 'events' && <EventManagement onUpdate={refreshStats} />}

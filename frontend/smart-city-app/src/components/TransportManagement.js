@@ -11,6 +11,8 @@ const TransportManagement = ({ onUpdate }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
     nom: '',
     type: 'Bus',
@@ -46,6 +48,32 @@ const TransportManagement = ({ onUpdate }) => {
     e.preventDefault();
     
     try {
+      // First, upload image if there's one
+      let imageUrl = null;
+      if (imagePreview) {
+        const uploadResponse = await fetch(`${API_URL}/upload/transport-image`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            transport_id: editingTransport ? editingTransport.id : `Transport_${Date.now()}`,
+            image_data: imagePreview
+          })
+        });
+
+        const uploadData = await uploadResponse.json();
+        if (uploadData.success) {
+          imageUrl = uploadData.url;
+        }
+      }
+
+      // Prepare transport data
+      const transportData = {
+        ...formData,
+        imageUrl: imageUrl || formData.imageUrl
+      };
+
       const url = editingTransport 
         ? `${API_URL}/transports/${editingTransport.id}`
         : `${API_URL}/transports`;
@@ -57,26 +85,48 @@ const TransportManagement = ({ onUpdate }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(transportData)
       });
 
       const data = await response.json();
 
       if (data.success || response.ok) {
         showNotification(
-          editingTransport ? '✅ Transport modifié avec succès!' : '✅ Transport créé avec succès!',
+          editingTransport ? '✅ Transport updated successfully!' : '✅ Transport created successfully!',
           'success'
         );
         closeModal();
         loadTransports();
         if (onUpdate) onUpdate();
       } else {
-        showNotification(data.error || 'Erreur lors de la sauvegarde', 'error');
+        showNotification(data.error || 'Error saving transport', 'error');
       }
     } catch (error) {
       console.error('Error saving transport:', error);
-      showNotification('❌ Erreur lors de la sauvegarde du transport', 'error');
+      showNotification('❌ Error saving transport', 'error');
     }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showNotification('Image size should not exceed 5MB', 'error');
+        return;
+      }
+
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const handleDelete = async (transportId) => {
@@ -111,8 +161,12 @@ const TransportManagement = ({ onUpdate }) => {
         capacite: transport.capacite || '',
         immatriculation: transport.immatriculation || '',
         vitesseMax: transport.vitesseMax || '',
-        electrique: transport.electrique ? 'true' : 'false'
+        electrique: transport.electrique ? 'true' : 'false',
+        imageUrl: transport.imageUrl || ''
       });
+      if (transport.imageUrl) {
+        setImagePreview(transport.imageUrl);
+      }
     } else {
       setEditingTransport(null);
       setFormData({
@@ -121,8 +175,11 @@ const TransportManagement = ({ onUpdate }) => {
         capacite: '',
         immatriculation: '',
         vitesseMax: '',
-        electrique: 'false'
+        electrique: 'false',
+        imageUrl: ''
       });
+      setImageFile(null);
+      setImagePreview(null);
     }
     setShowModal(true);
   };
@@ -130,6 +187,8 @@ const TransportManagement = ({ onUpdate }) => {
   const closeModal = () => {
     setShowModal(false);
     setEditingTransport(null);
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const getTransportIcon = (type) => {
@@ -237,6 +296,11 @@ const TransportManagement = ({ onUpdate }) => {
         <div className="cards-grid">
           {filteredTransports.map((transport, index) => (
             <div key={index} className="transport-card">
+              {transport.imageUrl && (
+                <div className="transport-card-image">
+                  <img src={transport.imageUrl} alt={transport.nom} />
+                </div>
+              )}
               <div className="transport-card-header">
                 <div className="transport-icon">{getTransportIcon(transport.type)}</div>
                 <div className="transport-info">
@@ -247,22 +311,22 @@ const TransportManagement = ({ onUpdate }) => {
               
               <div className="transport-card-body">
                 <div className="info-row">
-                  <span className="info-label">📋 Immatriculation</span>
+                  <span className="info-label">📋 Registration</span>
                   <span className="info-value">{transport.immatriculation || 'N/A'}</span>
                 </div>
                 <div className="info-row">
-                  <span className="info-label">👥 Capacité</span>
-                  <span className="info-value">{transport.capacite ? `${transport.capacite} places` : 'N/A'}</span>
+                  <span className="info-label">👥 Capacity</span>
+                  <span className="info-value">{transport.capacite ? `${transport.capacite} seats` : 'N/A'}</span>
                 </div>
                 <div className="info-row">
-                  <span className="info-label">⚡ Type d'énergie</span>
+                  <span className="info-label">⚡ Energy</span>
                   <span className={`badge ${transport.electrique ? 'badge-success' : 'badge-warning'}`}>
-                    {transport.electrique ? '⚡ Électrique' : '⛽ Thermique'}
+                    {transport.electrique ? '⚡ Electric' : '⛽ Fuel'}
                   </span>
                 </div>
                 {transport.vitesseMax && (
                   <div className="info-row">
-                    <span className="info-label">🚀 Vitesse max</span>
+                    <span className="info-label">🚀 Max Speed</span>
                     <span className="info-value">{transport.vitesseMax} km/h</span>
                   </div>
                 )}
@@ -273,7 +337,7 @@ const TransportManagement = ({ onUpdate }) => {
                   className="btn btn-warning btn-sm"
                   onClick={() => openModal(transport)}
                 >
-                  ✏️ Modifier
+                  ✏️ Edit
                 </button>
                 <button 
                   className="btn btn-danger btn-sm"
@@ -371,12 +435,41 @@ const TransportManagement = ({ onUpdate }) => {
                 </div>
               </div>
 
+              <div className="form-group">
+                <label>📸 Transport Image</label>
+                <div className="image-upload-section">
+                  {imagePreview ? (
+                    <div className="image-preview-container">
+                      <img src={imagePreview} alt="Transport preview" className="transport-image-preview" />
+                      <button type="button" onClick={removeImage} className="btn btn-danger btn-sm">
+                        🗑️ Remove Image
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="image-upload-placeholder">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        id="transport-image"
+                        style={{display: 'none'}}
+                      />
+                      <label htmlFor="transport-image" className="upload-label">
+                        <div className="upload-icon">📷</div>
+                        <div>Click to upload transport image</div>
+                        <small>(Max 5MB - JPG, PNG, GIF)</small>
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="form-actions">
                 <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                  Annuler
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-success">
-                  {editingTransport ? '💾 Mettre à jour' : '✅ Créer le transport'}
+                  {editingTransport ? 'Update Transport' : 'Create Transport'}
                 </button>
               </div>
             </form>

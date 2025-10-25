@@ -672,6 +672,32 @@ def upload_user_profile_image():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
 
+@app.route('/api/upload/transport-image', methods=['POST'])
+def upload_transport_image_endpoint():
+    """Upload transport image to Cloudinary"""
+    try:
+        data = request.json
+        transport_id = data.get('transport_id')
+        image_data = data.get('image_data')
+        
+        if not transport_id or not image_data:
+            return jsonify({'success': False, 'error': 'transport_id and image_data are required'}), 400
+        
+        # Upload to Cloudinary  
+        from cloudinary_helper import upload_station_image
+        result = upload_station_image(image_data, transport_id)  # Reuse station upload function
+        
+        if 'error' in result:
+            return jsonify({'success': False, 'error': result['error']}), 400
+        
+        return jsonify({
+            'success': True,
+            'url': result['url'],
+            'public_id': result['public_id']
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
 @app.route('/api/upload/station-image', methods=['POST'])
 def upload_station_image_endpoint():
     """Upload station image to Cloudinary"""

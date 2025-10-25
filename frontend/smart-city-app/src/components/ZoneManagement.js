@@ -127,107 +127,115 @@ const ZoneManagement = ({ onUpdate }) => {
   };
 
   if (loading) {
-    return <div className="loading">Chargement des zones...</div>;
+    return <div className="loading">Loading zones...</div>;
   }
 
   return (
     <div className="crud-container">
       <div className="crud-header">
-        <h2>🏘️ Gestion des Zones Urbaines</h2>
+        <h2>🏘️ Urban Zones Management</h2>
         <button className="btn btn-primary" onClick={() => openModal()}>
-          + Ajouter une Zone
+          + Add Zone
         </button>
       </div>
 
       <div className="search-bar">
-        <input type="text" placeholder="Rechercher une zone..." />
+        <input type="text" placeholder="Search zones..." />
       </div>
 
       {zones.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">🏘️</div>
-          <h3>Aucune zone</h3>
-          <p>Commencez par ajouter votre première zone urbaine</p>
+          <h3>No zones</h3>
+          <p>Start by adding your first urban zone</p>
         </div>
       ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Nom</th>
-              <th>Type</th>
-              <th>Transports</th>
-              <th>Superficie</th>
-              <th>Population</th>
-              <th>Description</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {zones.map((zone, index) => (
-              <tr key={index}>
-                <td>
-                  <strong>{getZoneIcon(zone.type)} {zone.nom}</strong>
-                </td>
-                <td>
-                  <span className="badge badge-info">{zone.type}</span>
-                </td>
-                <td>{zone.totalTransports || 0} transport(s)</td>
-                <td>{zone.superficie ? `${zone.superficie} km²` : '-'}</td>
-                <td>{zone.population ? zone.population.toLocaleString('fr-FR') : '-'}</td>
-                <td>{zone.description || '-'}</td>
-                <td className="actions-cell">
-                  <button 
-                    className="btn btn-warning"
-                    onClick={() => openModal(zone)}
-                  >
-                    ✏️ Modifier
-                  </button>
-                  <button 
-                    className="btn btn-danger"
-                    onClick={() => handleDelete(zone.id)}
-                  >
-                    🗑️ Supprimer
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="cards-grid">
+          {zones.map((zone, index) => (
+            <div key={index} className="zone-card">
+              <div className="zone-card-header">
+                <div className="zone-info">
+                  <h3>{getZoneIcon(zone.type)} {zone.nom}</h3>
+                  <span className="zone-type-badge">{zone.type}</span>
+                </div>
+              </div>
+              
+              <div className="zone-stats">
+                <div className="zone-stat">
+                  <span className="zone-stat-value">{zone.superficie || 0}</span>
+                  <span className="zone-stat-label">km² Area</span>
+                </div>
+                <div className="zone-stat">
+                  <span className="zone-stat-value">{zone.population ? (zone.population / 1000).toFixed(1) + 'K' : '0'}</span>
+                  <span className="zone-stat-label">Population</span>
+                </div>
+              </div>
+
+              <div className="transport-card-body">
+                {zone.description && (
+                  <div className="info-row">
+                    <span className="info-label">📝 Description</span>
+                    <span className="info-value" style={{fontSize: '13px'}}>{zone.description}</span>
+                  </div>
+                )}
+                <div className="info-row">
+                  <span className="info-label">🚍 Transports</span>
+                  <span className="badge badge-primary">{zone.totalTransports || 0}</span>
+                </div>
+              </div>
+
+              <div className="transport-card-footer">
+                <button 
+                  className="btn btn-warning btn-sm"
+                  onClick={() => openModal(zone)}
+                >
+                  ✏️ Edit
+                </button>
+                <button 
+                  className="btn btn-danger btn-sm"
+                  onClick={() => handleDelete(zone.id)}
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{editingZone ? 'Modifier la zone' : 'Nouvelle zone urbaine'}</h3>
+            <h3>{editingZone ? 'Edit Zone' : 'New Urban Zone'}</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Nom de la zone *</label>
+                <label>Zone Name *</label>
                 <input
                   type="text"
                   value={formData.nom}
                   onChange={(e) => setFormData({...formData, nom: e.target.value})}
-                  placeholder="Ex: Centre-Ville de Tunis"
+                  placeholder="Ex: Downtown Tunis"
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label>Type de zone *</label>
+                <label>Zone Type *</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
                   required
                 >
-                  <option value="CentreVille">🏛️ Centre-Ville</option>
-                  <option value="Banlieue">🏘️ Banlieue</option>
-                  <option value="ZoneIndustrielle">🏭 Zone Industrielle</option>
-                  <option value="ZoneResidentielle">🏠 Zone Résidentielle</option>
-                  <option value="ZoneCommerciale">🏬 Zone Commerciale</option>
+                  <option value="CentreVille">🏛️ City Center</option>
+                  <option value="Banlieue">🏘️ Suburb</option>
+                  <option value="ZoneIndustrielle">🏭 Industrial Zone</option>
+                  <option value="ZoneResidentielle">🏠 Residential Zone</option>
+                  <option value="ZoneCommerciale">🏬 Commercial Zone</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label>Superficie (km²)</label>
+                <label>Area (km²)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -252,17 +260,17 @@ const ZoneManagement = ({ onUpdate }) => {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  placeholder="Décrivez les caractéristiques de la zone..."
+                  placeholder="Describe the zone characteristics..."
                   rows="4"
                 />
               </div>
 
               <div className="form-actions">
                 <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                  Annuler
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-success">
-                  {editingZone ? 'Mettre à jour' : 'Créer'}
+                  {editingZone ? 'Update' : 'Create'}
                 </button>
               </div>
             </form>
@@ -271,13 +279,13 @@ const ZoneManagement = ({ onUpdate }) => {
       )}
 
       <div style={{marginTop: '30px', padding: '20px', background: '#f8f9fa', borderRadius: '10px'}}>
-        <h4 style={{marginBottom: '10px', color: '#667eea'}}>🏘️ Module </h4>
+        <h4 style={{marginBottom: '10px', color: '#667eea'}}>🏘️ Zones Module</h4>
         <p style={{color: '#666'}}>
-          <strong>Fonctionnalités CRUD:</strong><br/>
-          ✅ Create (Créer) - Ajouter de nouvelles zones urbaines<br/>
-          ✅ Read (Lire) - Visualiser toutes les zones<br/>
-          ✅ Update (Modifier) - Mettre à jour les informations<br/>
-          ✅ Delete (Supprimer) - Supprimer des zones
+          <strong>CRUD Features:</strong><br/>
+          ✅ Create - Add new urban zones<br/>
+          ✅ Read - View all zones<br/>
+          ✅ Update - Edit zone information<br/>
+          ✅ Delete - Remove zones
         </p>
       </div>
     </div>

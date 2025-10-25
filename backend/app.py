@@ -734,6 +734,31 @@ def upload_station_image_endpoint():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
 
+@app.route('/api/upload/event-image', methods=['POST'])
+def upload_event_image_endpoint():
+    """Upload event image to Cloudinary"""
+    try:
+        data = request.json
+        event_id = data.get('event_id')
+        image_data = data.get('image_data')
+        
+        if not event_id or not image_data:
+            return jsonify({'success': False, 'error': 'event_id and image_data are required'}), 400
+        
+        # Upload to Cloudinary - reuse station upload function
+        result = upload_station_image(image_data, event_id)
+        
+        if 'error' in result:
+            return jsonify({'success': False, 'error': result['error']}), 400
+        
+        return jsonify({
+            'success': True,
+            'url': result['url'],
+            'public_id': result['public_id']
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
 @app.route('/api/ai/related-queries', methods=['POST'])
 def get_related_queries():
     """Get related query suggestions based on current query"""

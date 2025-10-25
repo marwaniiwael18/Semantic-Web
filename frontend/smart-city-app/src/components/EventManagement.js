@@ -8,12 +8,15 @@ const EventManagement = ({ onUpdate }) => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [formData, setFormData] = useState({
     nom: '',
     type: 'Accident',
     description: '',
     gravite: 3,
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    imageUrl: ''
   });
 
   useEffect(() => {
@@ -32,10 +35,54 @@ const EventManagement = ({ onUpdate }) => {
     setLoading(false);
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image too large. Max size is 5MB');
+        return;
+      }
+
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageFile(file);
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     try {
+      // Upload image first if there's a new image
+      let imageUrl = formData.imageUrl || '';
+      if (imagePreview && imageFile) {
+        const uploadResponse = await fetch(`${API_URL}/upload/event-image`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            event_id: editingEvent ? editingEvent.id : `event_${Date.now()}`,
+            image_data: imagePreview
+          })
+        });
+
+        const uploadData = await uploadResponse.json();
+        if (uploadData.success) {
+          imageUrl = uploadData.url;
+        }
+      }
+      
       const endpoint = editingEvent 
         ? `${API_URL}/events/${editingEvent.id}` 
         : `${API_URL}/events`;
@@ -47,7 +94,7 @@ const EventManagement = ({ onUpdate }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({...formData, imageUrl})
       });
 
       const data = await response.json();
@@ -97,8 +144,12 @@ const EventManagement = ({ onUpdate }) => {
         type: event.type,
         description: event.description || '',
         gravite: event.gravite || 3,
-        date: event.date ? event.date.split('T')[0] : new Date().toISOString().split('T')[0]
+        date: event.date ? event.date.split('T')[0] : new Date().toISOString().split('T')[0],
+        imageUrl: event.imageUrl || ''
       });
+      if (event.imageUrl) {
+        setImagePreview(event.imageUrl);
+      }
     } else {
       setEditingEvent(null);
       setFormData({
@@ -106,7 +157,8 @@ const EventManagement = ({ onUpdate }) => {
         type: 'Accident',
         description: '',
         gravite: 3,
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        imageUrl: ''
       });
     }
     setShowModal(true);
@@ -115,94 +167,115 @@ const EventManagement = ({ onUpdate }) => {
   const closeModal = () => {
     setShowModal(false);
     setEditingEvent(null);
-  };
-
-  const getGraviteBadge = (gravite) => {
-    if (gravite >= 4) return 'badge-danger';
-    if (gravite === 3) return 'badge-warning';
-    return 'badge-success';
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   if (loading) {
-    return <div className="loading">Chargement des événements...</div>;
+    return <div className="loading">Loading events...</div>;
   }
 
   return (
     <div className="crud-container">
       <div className="crud-header">
-        <h2>⚠️ Gestion des Événements de Circulation</h2>
+        <h2>⚠️ Traffic Events Management</h2>
         <button className="btn btn-primary" onClick={() => openModal()}>
-          + Signaler un Événement
+          + Report an Event
         </button>
       </div>
 
       <div className="search-bar">
-        <input type="text" placeholder="Rechercher un événement..." />
+        <input type="text" placeholder="Search events..." />
       </div>
 
       {events.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">⚠️</div>
-          <h3>Aucun événement</h3>
-          <p>Commencez par signaler votre premier événement</p>
+          <h3>No events</h3>
+          <p>Start by reporting your first event</p>
         </div>
       ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Nom</th>
-              <th>Type</th>
-              <th>Description</th>
-              <th>Gravité</th>
-              <th>Date</th>
-              <th>Trajet impacté</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {events.map((event, index) => (
-              <tr key={index}>
-                <td><strong>{event.nom}</strong></td>
-                <td>
-                  <span className="badge badge-danger">{event.type}</span>
-                </td>
-                <td>{event.description || '-'}</td>
-                <td>
-                  <span className={`badge ${getGraviteBadge(event.gravite)}`}>
-                    {event.gravite ? `${event.gravite}/5` : '-'}
+        <div className="cards-grid">
+          {events.map((event, index) => (
+            <div key={index} className="event-card">
+              {event.imageUrl ? (
+                <div className="transport-card-image">
+                  <img src={event.imageUrl} alt={event.nom} />
+                </div>
+              ) : (
+                <div className="transport-card-no-image" style={{background: 'linear-gradient(135deg, #f56565 0%, #ed8936 100%)'}}>
+                  ⚠️
+                </div>
+              )}
+              
+              <div className="event-card-header">
+                <div>
+                  <h3 className="event-title">{event.nom}</h3>
+                  <span className="event-type">{event.type}</span>
+                </div>
+              </div>
+              
+              <div className="transport-card-body">
+                {event.description && (
+                  <div className="info-row">
+                    <span className="info-label">📝 Description</span>
+                    <span className="info-value" style={{fontSize: '13px', textAlign: 'right'}}>{event.description}</span>
+                  </div>
+                )}
+                
+                <div className="severity-indicator">
+                  <span className="info-label">Severity:</span>
+                  <div className="severity-dots">
+                    {[1, 2, 3, 4, 5].map(dot => (
+                      <div 
+                        key={dot} 
+                        className={`severity-dot ${dot <= (event.gravite || 0) ? 'active' : ''}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="info-row">
+                  <span className="info-label">📅 Date</span>
+                  <span className="info-value">
+                    {event.date ? new Date(event.date).toLocaleDateString() : '-'}
                   </span>
-                </td>
-                <td>
-                  {event.date ? new Date(event.date).toLocaleDateString('fr-FR') : '-'}
-                </td>
-                <td>{event.trajet || '-'}</td>
-                <td className="actions-cell">
-                  <button 
-                    className="btn btn-warning"
-                    onClick={() => openModal(event)}
-                  >
-                    ✏️ Modifier
-                  </button>
-                  <button 
-                    className="btn btn-danger"
-                    onClick={() => handleDelete(event.id)}
-                  >
-                    🗑️ Supprimer
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+                
+                {event.trajet && (
+                  <div className="info-row">
+                    <span className="info-label">🚗 Impact</span>
+                    <span className="info-value">{event.trajet}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="transport-card-footer">
+                <button 
+                  className="btn btn-warning btn-sm"
+                  onClick={() => openModal(event)}
+                >
+                  ✏️ Edit
+                </button>
+                <button 
+                  className="btn btn-danger btn-sm"
+                  onClick={() => handleDelete(event.id)}
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{editingEvent ? 'Modifier l\'événement' : 'Nouvel événement'}</h3>
+            <h3>{editingEvent ? 'Edit Event' : 'New Event'}</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Nom de l'événement *</label>
+                <label>Event Name *</label>
                 <input
                   type="text"
                   value={formData.nom}
@@ -220,9 +293,9 @@ const EventManagement = ({ onUpdate }) => {
                   required
                 >
                   <option value="Accident">Accident</option>
-                  <option value="Embouteillage">Embouteillage</option>
-                  <option value="Travaux">Travaux</option>
-                  <option value="Manifestation">Manifestation</option>
+                  <option value="Traffic Jam">Traffic Jam</option>
+                  <option value="Construction">Construction</option>
+                  <option value="Demonstration">Demonstration</option>
                 </select>
               </div>
 
@@ -231,13 +304,40 @@ const EventManagement = ({ onUpdate }) => {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  placeholder="Décrivez l'événement..."
+                  placeholder="Describe the event..."
                   rows="4"
                 />
               </div>
 
+              <div className="image-upload-section">
+                <label>Event Image</label>
+                {imagePreview ? (
+                  <div className="image-preview-container">
+                    <img src={imagePreview} alt="Preview" className="transport-image-preview" />
+                    <button type="button" className="btn btn-danger btn-sm" onClick={removeImage}>
+                      🗑️ Remove Image
+                    </button>
+                  </div>
+                ) : (
+                  <div className="image-upload-placeholder">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      id="event-image"
+                      style={{display: 'none'}}
+                    />
+                    <label htmlFor="event-image" className="upload-label">
+                      <div className="upload-icon">📷</div>
+                      <p>Click to upload event image</p>
+                      <small>Max size: 5MB</small>
+                    </label>
+                  </div>
+                )}
+              </div>
+
               <div className="form-group">
-                <label>Gravité: {formData.gravite}/5</label>
+                <label>Severity: {formData.gravite}/5</label>
                 <input
                   type="range"
                   min="1"
@@ -247,9 +347,9 @@ const EventManagement = ({ onUpdate }) => {
                   style={{width: '100%'}}
                 />
                 <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#666'}}>
-                  <span>1 - Faible</span>
-                  <span>3 - Moyenne</span>
-                  <span>5 - Forte</span>
+                  <span>1 - Low</span>
+                  <span>3 - Medium</span>
+                  <span>5 - High</span>
                 </div>
               </div>
 
@@ -264,10 +364,10 @@ const EventManagement = ({ onUpdate }) => {
 
               <div className="form-actions">
                 <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                  Annuler
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-success">
-                  {editingEvent ? 'Mettre à jour' : 'Signaler'}
+                  {editingEvent ? 'Update' : 'Report'}
                 </button>
               </div>
             </form>
@@ -276,13 +376,13 @@ const EventManagement = ({ onUpdate }) => {
       )}
 
       <div style={{marginTop: '30px', padding: '20px', background: '#f8f9fa', borderRadius: '10px'}}>
-        <h4 style={{marginBottom: '10px', color: '#667eea'}}>⚠️ Module</h4>
+        <h4 style={{marginBottom: '10px', color: '#667eea'}}>⚠️ Events Module</h4>
         <p style={{color: '#666'}}>
-          <strong>Fonctionnalités CRUD:</strong><br/>
-          ✅ Create (Créer) - Signaler de nouveaux événements<br/>
-          ✅ Read (Lire) - Consulter tous les événements<br/>
-          ✅ Update (Modifier) - Mettre à jour les informations<br/>
-          ✅ Delete (Supprimer) - Supprimer des événements résolus
+          <strong>CRUD Features:</strong><br/>
+          ✅ Create - Report new traffic events<br/>
+          ✅ Read - View all events<br/>
+          ✅ Update - Edit event information<br/>
+          ✅ Delete - Remove resolved events
         </p>
       </div>
     </div>

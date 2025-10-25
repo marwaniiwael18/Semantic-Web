@@ -296,9 +296,13 @@ const TransportManagement = ({ onUpdate }) => {
         <div className="cards-grid">
           {filteredTransports.map((transport, index) => (
             <div key={index} className="transport-card">
-              {transport.imageUrl && (
+              {transport.imageUrl ? (
                 <div className="transport-card-image">
                   <img src={transport.imageUrl} alt={transport.nom} />
+                </div>
+              ) : (
+                <div className="transport-card-no-image">
+                  {getTransportIcon(transport.type)}
                 </div>
               )}
               <div className="transport-card-header">
@@ -343,7 +347,7 @@ const TransportManagement = ({ onUpdate }) => {
                   className="btn btn-danger btn-sm"
                   onClick={() => handleDelete(transport.id)}
                 >
-                  🗑️ Supprimer
+                  🗑️ Delete
                 </button>
               </div>
             </div>

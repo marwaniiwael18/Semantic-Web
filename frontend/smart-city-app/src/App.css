@@ -1648,3 +1648,60 @@ body {
   color: #718096;
   font-weight: 500;
 }
+
+/* Station Map Markers */
+.station-marker {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.station-marker:hover {
+  transform: scale(1.2);
+}
+
+.temp-station-marker {
+  animation: bounce 0.5s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Mapbox Popup Customization */
+.mapboxgl-popup-content {
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.mapboxgl-popup-close-button {
+  font-size: 20px;
+  padding: 8px;
+  color: #667eea;
+}
+
+.mapboxgl-popup-close-button:hover {
+  background: #f3f4f6;
+}
+
+/* Geocoder Search Box Styling */
+.mapboxgl-ctrl-geocoder {
+  min-width: 300px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 12px !important;
+}
+
+.mapboxgl-ctrl-geocoder input {
+  padding: 12px 40px !important;
+  font-size: 15px !important;
+}
+
+.mapboxgl-ctrl-geocoder--icon-search {
+  top: 12px !important;
+  left: 12px !important;
+}

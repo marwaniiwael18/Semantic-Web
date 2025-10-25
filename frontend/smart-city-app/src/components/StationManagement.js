@@ -1,24 +1,164 @@
-// StationManagement.js - Station Management with Map Integration
-import React, { useState, useEffect } from 'react';
-import MapPicker from './MapPicker';
+// StationManagement.js - Station Management with Full Interactive Map
+import React, { useState, useEffect, useRef } from 'react';
+import mapboxgl from 'mapbox-gl';
+import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
+import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 const API_URL = 'http://localhost:5001/api';
+const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN;
+
+mapboxgl.accessToken = MAPBOX_TOKEN;
 
 const StationManagement = ({ onUpdate }) => {
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingStation, setEditingStation] = useState(null);
+  const [viewMode, setViewMode] = useState('map'); // 'map' or 'table'
+  const [addMode, setAddMode] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const [formData, setFormData] = useState({
     nom: '',
     type: 'StationBus',
     latitude: '',
     longitude: ''
   });
+  const [editingStation, setEditingStation] = useState(null);
+  
+  const mapContainer = useRef(null);
+  const map = useRef(null);
+  const markers = useRef([]);
+  const tempMarker = useRef(null);
 
   useEffect(() => {
     loadStations();
   }, []);
+
+  // Initialize map
+  useEffect(() => {
+    if (map.current) return; // Initialize map only once
+    
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [10.1815, 36.8065], // Tunis
+      zoom: 11
+    });
+
+    // Add navigation controls
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Add geocoder (search box)
+    const geocoder = new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken,
+      mapboxgl: mapboxgl,
+      marker: false,
+      placeholder: 'Search for a location...'
+    });
+    
+    map.current.addControl(geocoder, 'top-left');
+
+    // Handle map click for adding stations
+    map.current.on('click', (e) => {
+      if (addMode) {
+        const { lng, lat } = e.lngLat;
+        handleMapClick(lng, lat);
+      }
+    });
+
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, []);
+
+  // Update markers when stations change
+  useEffect(() => {
+    if (!map.current) return;
+    
+    // Clear existing markers
+    markers.current.forEach(marker => marker.remove());
+    markers.current = [];
+
+    // Add markers for each station
+    stations.forEach(station => {
+      if (station.latitude && station.longitude) {
+        const el = document.createElement('div');
+        el.className = 'station-marker';
+        el.innerHTML = getStationIcon(station.type);
+        el.style.fontSize = '32px';
+        el.style.cursor = 'pointer';
+
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat([station.longitude, station.latitude])
+          .setPopup(
+            new mapboxgl.Popup({ offset: 25 })
+              .setHTML(`
+                <div style="padding: 10px;">
+                  <h3 style="margin: 0 0 8px 0;">${getStationIcon(station.type)} ${station.nom}</h3>
+                  <p style="margin: 4px 0;"><strong>Type:</strong> ${station.type}</p>
+                  <p style="margin: 4px 0;"><strong>Coordinates:</strong><br/>${station.latitude.toFixed(4)}, ${station.longitude.toFixed(4)}</p>
+                  <div style="margin-top: 10px; display: flex; gap: 8px;">
+                    <button 
+                      onclick="window.editStation('${station.id}')"
+                      style="padding: 6px 12px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer;"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button 
+                      onclick="window.deleteStation('${station.id}')"
+                      style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+              `)
+          )
+          .addTo(map.current);
+
+        markers.current.push(marker);
+      }
+    });
+  }, [stations]);
+
+  const handleMapClick = (lng, lat) => {
+    // Remove temporary marker if exists
+    if (tempMarker.current) {
+      tempMarker.current.remove();
+    }
+
+    // Add temporary marker
+    const el = document.createElement('div');
+    el.className = 'temp-station-marker';
+    el.innerHTML = '📍';
+    el.style.fontSize = '40px';
+
+    tempMarker.current = new mapboxgl.Marker(el)
+      .setLngLat([lng, lat])
+      .addTo(map.current);
+
+    // Set location and show modal
+    setSelectedLocation({ lng, lat });
+    setFormData({
+      ...formData,
+      latitude: lat.toFixed(6),
+      longitude: lng.toFixed(6)
+    });
+    setShowModal(true);
+    setAddMode(false);
+  };
+
+  const getStationIcon = (type) => {
+    switch(type) {
+      case 'StationBus': return '🚌';
+      case 'StationMétro': return '🚇';
+      case 'Parking': return '🅿️';
+      default: return '📍';
+    }
+  };
 
   const loadStations = async () => {
     setLoading(true);
@@ -55,6 +195,7 @@ const StationManagement = ({ onUpdate }) => {
           longitude: parseFloat(formData.longitude)
         })
       });
+
 
       const data = await response.json();
 
@@ -118,102 +259,191 @@ const StationManagement = ({ onUpdate }) => {
   const closeModal = () => {
     setShowModal(false);
     setEditingStation(null);
+    setSelectedLocation(null);
+    setAddMode(false);
+    if (tempMarker.current) {
+      tempMarker.current.remove();
+      tempMarker.current = null;
+    }
   };
 
-  if (loading) {
-    return <div className="loading">Chargement des stations...</div>;
+  const startAddMode = () => {
+    setAddMode(true);
+    alert('📍 Click anywhere on the map to add a new station');
+  };
+
+  const cancelAddMode = () => {
+    setAddMode(false);
+    if (tempMarker.current) {
+      tempMarker.current.remove();
+      tempMarker.current = null;
+    }
+  };
+
+  // Expose functions to window for popup buttons
+  useEffect(() => {
+    window.editStation = (stationId) => {
+      const station = stations.find(s => s.id === stationId);
+      if (station) {
+        setEditingStation(station);
+        setFormData({
+          nom: station.nom,
+          type: station.type,
+          latitude: station.latitude || '',
+          longitude: station.longitude || ''
+        });
+        setShowModal(true);
+      }
+    };
+
+    window.deleteStation = (stationId) => {
+      handleDelete(stationId);
+    };
+
+    return () => {
+      delete window.editStation;
+      delete window.deleteStation;
+    };
+  }, [stations]);
+
+  if (loading && stations.length === 0) {
+    return <div className="loading">Loading stations...</div>;
   }
 
   return (
-    <div className="crud-container">
+    <div className="crud-container" style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
       <div className="crud-header">
         <div className="module-info-card">
           <div className="module-icon">📍</div>
           <div className="module-details">
             <h2>Station Management</h2>
-            <p>Manage transit hubs, parking facilities, and bike stations</p>
+            <p>Interactive map: Click to add stations | Search with autocomplete</p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={() => openModal()}>
-          + Add Station
-        </button>
+        <div style={{display: 'flex', gap: '10px'}}>
+          {addMode ? (
+            <>
+              <button className="btn btn-secondary" onClick={cancelAddMode}>
+                ❌ Cancel
+              </button>
+              <div style={{padding: '10px 20px', background: '#667eea', color: 'white', borderRadius: '8px', fontWeight: '600'}}>
+                📍 Click on map to add station
+              </div>
+            </>
+          ) : (
+            <>
+              <button className="btn btn-success" onClick={startAddMode}>
+                📍 Add Station on Map
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => setViewMode(viewMode === 'map' ? 'table' : 'map')}
+              >
+                {viewMode === 'map' ? '📋 Table View' : '🗺️ Map View'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="search-bar">
-        <input type="text" placeholder="Search stations..." />
-      </div>
-
-      {stations.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">📍</div>
-          <h3>No Stations</h3>
-          <p>Start by adding your first station location</p>
+      {viewMode === 'map' ? (
+        <div style={{flex: 1, position: 'relative', marginTop: '20px', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.1)'}}>
+          <div 
+            ref={mapContainer} 
+            style={{width: '100%', height: '600px'}}
+          />
+          
+          {/* Station count badge */}
+          <div style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: '20px',
+            background: 'white',
+            padding: '15px 25px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            fontWeight: '700',
+            fontSize: '16px',
+            color: '#667eea'
+          }}>
+            📍 {stations.length} Station{stations.length !== 1 ? 's' : ''}
+          </div>
         </div>
       ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Latitude</th>
-              <th>Longitude</th>
-              <th>Map</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stations.map((station, index) => (
-              <tr key={index}>
-                <td><strong>{station.nom}</strong></td>
-                <td>
-                  <span className="badge badge-primary">{station.type}</span>
-                </td>
-                <td>{station.latitude ? station.latitude.toFixed(4) : '-'}</td>
-                <td>{station.longitude ? station.longitude.toFixed(4) : '-'}</td>
-                <td>
-                  {station.latitude && station.longitude ? (
-                    <a 
-                      href={`https://www.google.com/maps?q=${station.latitude},${station.longitude}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{color: '#667eea'}}
-                    >
-                      🗺️ View on Map
-                    </a>
-                  ) : '-'}
-                </td>
-                <td className="actions-cell">
-                  <button 
-                    className="btn btn-warning"
-                    onClick={() => openModal(station)}
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button 
-                    className="btn btn-danger"
-                    onClick={() => handleDelete(station.id)}
-                  >
-                    🗑️ Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div style={{marginTop: '20px'}}>
+          {stations.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">📍</div>
+              <h3>No Stations</h3>
+              <p>Click "Add Station on Map" to start</p>
+            </div>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Latitude</th>
+                  <th>Longitude</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stations.map((station, index) => (
+                  <tr key={index}>
+                    <td><strong>{getStationIcon(station.type)} {station.nom}</strong></td>
+                    <td>
+                      <span className="badge badge-primary">{station.type}</span>
+                    </td>
+                    <td>{station.latitude ? station.latitude.toFixed(4) : '-'}</td>
+                    <td>{station.longitude ? station.longitude.toFixed(4) : '-'}</td>
+                    <td className="actions-cell">
+                      <button 
+                        className="btn btn-warning"
+                        onClick={() => window.editStation(station.id)}
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button 
+                        className="btn btn-danger"
+                        onClick={() => window.deleteStation(station.id)}
+                      >
+                        🗑️ Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       )}
+
 
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
-            <h3>{editingStation ? 'Modifier la station' : 'Nouvelle station'}</h3>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>{editingStation ? 'Edit Station' : 'New Station'}</h3>
+            {selectedLocation && !editingStation && (
+              <div style={{
+                background: '#e0f2fe',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '20px',
+                fontSize: '14px',
+                color: '#0369a1'
+              }}>
+                📍 Location selected: {formData.latitude}, {formData.longitude}
+              </div>
+            )}
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Nom de la station *</label>
+                <label>Station Name *</label>
                 <input
                   type="text"
                   value={formData.nom}
                   onChange={(e) => setFormData({...formData, nom: e.target.value})}
-                  placeholder="Ex: Station Bab El Bhar"
+                  placeholder="Ex: Bab El Bhar Station"
                   required
                 />
               </div>
@@ -225,10 +455,10 @@ const StationManagement = ({ onUpdate }) => {
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
                   required
                 >
-                  <option value="StationBus">Station Bus</option>
-                  <option value="StationMetro">Station Métro</option>
-                  <option value="Parking">Parking</option>
-                  <option value="StationVelo">Station Vélo</option>
+                  <option value="StationBus">🚌 Bus Station</option>
+                  <option value="StationMétro">🚇 Metro Station</option>
+                  <option value="Parking">🅿️ Parking</option>
+                  <option value="StationVelo">🚲 Bike Station</option>
                 </select>
               </div>
 
@@ -242,6 +472,7 @@ const StationManagement = ({ onUpdate }) => {
                     onChange={(e) => setFormData({...formData, latitude: e.target.value})}
                     placeholder="Ex: 36.806495"
                     required
+                    readOnly={!!selectedLocation && !editingStation}
                   />
                 </div>
 
@@ -254,23 +485,9 @@ const StationManagement = ({ onUpdate }) => {
                     onChange={(e) => setFormData({...formData, longitude: e.target.value})}
                     placeholder="Ex: 10.181532"
                     required
+                    readOnly={!!selectedLocation && !editingStation}
                   />
                 </div>
-              </div>
-
-              <div className="form-group">
-                <label>📍 Select Location on Map</label>
-                <MapPicker 
-                  onLocationSelect={(coords) => {
-                    setFormData({
-                      ...formData,
-                      latitude: coords.lat,
-                      longitude: coords.lng
-                    });
-                  }}
-                  initialLat={formData.latitude ? parseFloat(formData.latitude) : 36.8065}
-                  initialLng={formData.longitude ? parseFloat(formData.longitude) : 10.1815}
-                />
               </div>
 
               <div className="form-actions">
@@ -278,7 +495,7 @@ const StationManagement = ({ onUpdate }) => {
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-success">
-                  {editingStation ? 'Update Station' : 'Create Station'}
+                  {editingStation ? '✏️ Update Station' : '✅ Create Station'}
                 </button>
               </div>
             </form>

@@ -159,6 +159,10 @@ npm start
 Frontend will run on: **http://localhost:3000**
 
 ### Demo Account
+- **Username:** Mohamed Ben Salem
+- **Password:** mohamed2025
+
+Or use the original demo:
 - **Username:** Ali
 - **Password:** ali123
 
@@ -186,6 +190,11 @@ See `backend/sparql_queries.md` for 20+ example queries!
 ### Authentication
 - `POST /api/auth/login` - User login
 - `POST /api/auth/register` - User registration
+
+### Image Upload (Cloudinary)
+- `POST /api/upload/profile-image` - Upload user profile image
+- `POST /api/upload/transport-image` - Upload transport vehicle image
+- `POST /api/upload/station-image` - Upload station image
 
 ### Statistics
 - `GET /api/stats` - Get system statistics
@@ -233,12 +242,14 @@ See `backend/sparql_queries.md` for 20+ example queries!
 
 ## � Features
 
+## 🔑 Features
+
 ### 🎯 Core Modules (Full CRUD)
-- **👥 User Management** - Citizen and tourist accounts
-- **🚌 Transport Management** - Buses, metros, bikes, shared cars, scooters
-- **📍 Station Management** - Transit hubs, metro stations, bus stops, parking
+- ** Transport Management** - Buses, metros, bikes, shared cars, scooters with image upload
+- **📍 Station Management** - Transit hubs, metro stations, bus stops, parking with interactive map selection
 - **⚠️ Event Management** - Traffic accidents, congestion, construction events
 - **🏘️ Zone Management** - Urban areas, city center, suburbs, industrial zones
+- **👤 User Profile** - Profile management with Cloudinary image upload
 
 ### 🤖 AI-Powered Features
 - Natural language to SPARQL query conversion
@@ -249,7 +260,7 @@ See `backend/sparql_queries.md` for 20+ example queries!
 
 ### 🔐 Authentication & User Management
 - User registration and login
-- Profile management with image upload (max 5MB)
+- Profile management with image upload (max 5MB, stored in Cloudinary)
 - Secure password handling
 - Session persistence with localStorage
 - Clickable avatar for profile editing
@@ -269,7 +280,8 @@ See `backend/sparql_queries.md` for 20+ example queries!
 - Loading states
 - Empty state illustrations
 - Mobile-responsive design
-- Profile image preview
+- Image preview and upload
+- Interactive Mapbox integration
 - Dark mode compatible styling
 
 ## 📈 Project Validation

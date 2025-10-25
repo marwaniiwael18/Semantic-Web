@@ -218,7 +218,7 @@ const UserManagement = ({ onUpdate }) => {
       )}
 
       <div style={{marginTop: '30px', padding: '20px', background: '#f8f9fa', borderRadius: '10px'}}>
-        <h4 style={{marginBottom: '10px', color: '#667eea'}}>👤 Module géré par: Yassine Mannai</h4>
+        <h4 style={{marginBottom: '10px', color: '#667eea'}}>👤 Module </h4>
         <p style={{color: '#666'}}>
           <strong>Fonctionnalités CRUD:</strong><br/>
           ✅ Create (Créer) - Ajouter de nouveaux utilisateurs<br/>

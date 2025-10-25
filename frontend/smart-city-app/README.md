@@ -53,11 +53,11 @@ smart-city-app/
 │   └── index.html
 ├── src/
 │   ├── components/
-│   │   ├── UserManagement.js      # Yassine's module
-│   │   ├── TransportManagement.js # Wael's module
-│   │   ├── StationManagement.js   # Kenza's module
-│   │   ├── EventManagement.js     # Aymen's module
-│   │   └── ZoneManagement.js      # Nassim's module
+│   │   ├── UserManagement.js      # 's module
+│   │   ├── TransportManagement.js #  module
+│   │   ├── StationManagement.js   #  module
+│   │   ├── EventManagement.js     #  module
+│   │   └── ZoneManagement.js      #  module
 │   ├── App.js                     # Main component with tabs
 │   ├── App.css                    # Complete styling
 │   └── index.js                   # Entry point
@@ -95,13 +95,13 @@ Each module provides:
 - Google Maps integration links
 - Types: Bus Station, Metro Station, Bike Station
 
-### Event Management (Aymen)
+### Event Management 
 - Manage traffic events
 - Fields: Name, Type, Description, Severity, Date
 - Severity rating (1-5) with color indicators
 - Types: Accident, Traffic Jam, Construction
 
-### Zone Management (Nassim)
+### Zone Management 
 - Manage urban zones
 - Fields: Name, Type, Area, Population, Description
 - Types: Downtown, Suburb, Industrial, Residential, Commercial
@@ -148,11 +148,11 @@ The application features:
    ```
 
 2. **Work on your assigned module**:
-   - Yassine: `src/components/UserManagement.js`
-   - Wael: `src/components/TransportManagement.js`
-   - Kenza: `src/components/StationManagement.js`
-   - Aymen: `src/components/EventManagement.js`
-   - Nassim: `src/components/ZoneManagement.js`
+   - : `src/components/UserManagement.js`
+   - : `src/components/TransportManagement.js`
+   - : `src/components/StationManagement.js`
+   - : `src/components/EventManagement.js`
+   - : `src/components/ZoneManagement.js`
 
 3. **Test your changes**:
    ```bash

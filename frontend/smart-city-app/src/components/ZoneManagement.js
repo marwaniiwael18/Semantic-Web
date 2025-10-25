@@ -34,19 +34,58 @@ const ZoneManagement = ({ onUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Soumission:', formData);
-    alert(editingZone ? 'Zone modifiée!' : 'Nouvelle zone ajoutée!');
-    closeModal();
-    loadZones();
-    if (onUpdate) onUpdate();
+    
+    try {
+      const endpoint = editingZone 
+        ? `${API_URL}/zones/${editingZone.id}` 
+        : `${API_URL}/zones`;
+      
+      const method = editingZone ? 'PUT' : 'POST';
+
+      const response = await fetch(endpoint, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      
+      if (data.success || response.ok) {
+        alert(editingZone ? 'Zone updated!' : 'Zone created!');
+        closeModal();
+        loadZones();
+        if (onUpdate) onUpdate();
+      } else {
+        alert('Error: ' + (data.error || 'Failed to save zone'));
+      }
+    } catch (error) {
+      console.error('Error saving zone:', error);
+      alert('Error saving zone');
+    }
   };
 
   const handleDelete = async (zoneId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette zone?')) {
-      console.log('Suppression de:', zoneId);
-      alert('Zone supprimée!');
-      loadZones();
-      if (onUpdate) onUpdate();
+    if (window.confirm('Are you sure you want to delete this zone?')) {
+      try {
+        const response = await fetch(`${API_URL}/zones/${zoneId}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+        
+        if (data.success || response.ok) {
+          alert('Zone deleted!');
+          loadZones();
+          if (onUpdate) onUpdate();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to delete zone'));
+        }
+      } catch (error) {
+        console.error('Error deleting zone:', error);
+        alert('Error deleting zone');
+      }
     }
   };
 
@@ -232,7 +271,7 @@ const ZoneManagement = ({ onUpdate }) => {
       )}
 
       <div style={{marginTop: '30px', padding: '20px', background: '#f8f9fa', borderRadius: '10px'}}>
-        <h4 style={{marginBottom: '10px', color: '#667eea'}}>🏘️ Module géré par: Nassim Khaldi</h4>
+        <h4 style={{marginBottom: '10px', color: '#667eea'}}>🏘️ Module </h4>
         <p style={{color: '#666'}}>
           <strong>Fonctionnalités CRUD:</strong><br/>
           ✅ Create (Créer) - Ajouter de nouvelles zones urbaines<br/>

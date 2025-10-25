@@ -34,19 +34,58 @@ const EventManagement = ({ onUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Soumission:', formData);
-    alert(editingEvent ? 'Événement modifié!' : 'Nouvel événement ajouté!');
-    closeModal();
-    loadEvents();
-    if (onUpdate) onUpdate();
+    
+    try {
+      const endpoint = editingEvent 
+        ? `${API_URL}/events/${editingEvent.id}` 
+        : `${API_URL}/events`;
+      
+      const method = editingEvent ? 'PUT' : 'POST';
+
+      const response = await fetch(endpoint, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      
+      if (data.success || response.ok) {
+        alert(editingEvent ? 'Event updated!' : 'Event created!');
+        closeModal();
+        loadEvents();
+        if (onUpdate) onUpdate();
+      } else {
+        alert('Error: ' + (data.error || 'Failed to save event'));
+      }
+    } catch (error) {
+      console.error('Error saving event:', error);
+      alert('Error saving event');
+    }
   };
 
   const handleDelete = async (eventId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet événement?')) {
-      console.log('Suppression de:', eventId);
-      alert('Événement supprimé!');
-      loadEvents();
-      if (onUpdate) onUpdate();
+    if (window.confirm('Are you sure you want to delete this event?')) {
+      try {
+        const response = await fetch(`${API_URL}/events/${eventId}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+        
+        if (data.success || response.ok) {
+          alert('Event deleted!');
+          loadEvents();
+          if (onUpdate) onUpdate();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to delete event'));
+        }
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        alert('Error deleting event');
+      }
     }
   };
 
@@ -237,7 +276,7 @@ const EventManagement = ({ onUpdate }) => {
       )}
 
       <div style={{marginTop: '30px', padding: '20px', background: '#f8f9fa', borderRadius: '10px'}}>
-        <h4 style={{marginBottom: '10px', color: '#667eea'}}>⚠️ Module géré par: Aymen Jallouli</h4>
+        <h4 style={{marginBottom: '10px', color: '#667eea'}}>⚠️ Module</h4>
         <p style={{color: '#666'}}>
           <strong>Fonctionnalités CRUD:</strong><br/>
           ✅ Create (Créer) - Signaler de nouveaux événements<br/>

@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart City - Semantic Web Application</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f1f3f5;
+            padding: 0 30px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            color: #495057;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .search-bar button {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        .search-bar button:hover {
+            background: #5568d3;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .info-value {
+            color: #6c757d;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .badge-success {
+            background: #51cf66;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffd43b;
+            color: #333;
+        }
+
+        .badge-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        .error {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #856404;
+        }
+
+        .sparql-section {
+            margin-top: 20px;
+        }
+
+        .sparql-section textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .results-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .results-table tr:hover {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏙️ Smart City & Mobility</h1>
+            <p>Semantic Web Application - Web Sémantique Project</p>
+        </header>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <h3 id="stat-users">-</h3>
+                <p>Utilisateurs</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat-transports">-</h3>
+                <p>Transports</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat-stations">-</h3>
+                <p>Stations</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat-trajets">-</h3>
+                <p>Trajets</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat-events">-</h3>
+                <p>Événements</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('users')">👥 Utilisateurs</button>
+            <button class="tab" onclick="switchTab('transports')">🚌 Transports</button>
+            <button class="tab" onclick="switchTab('stations')">📍 Stations</button>
+            <button class="tab" onclick="switchTab('events')">⚠️ Événements</button>
+            <button class="tab" onclick="switchTab('zones')">🏘️ Zones</button>
+            <button class="tab" onclick="switchTab('ai')">🤖 AI Search</button>
+            <button class="tab" onclick="switchTab('sparql')">🔍 SPARQL</button>
+        </div>
+
+        <div class="content">
+            <!-- Users Tab -->
+            <div id="tab-users" class="tab-content active">
+                <div class="search-bar">
+                    <input type="text" id="search-users" placeholder="Rechercher un utilisateur...">
+                    <button onclick="searchUsers()">Rechercher</button>
+                </div>
+                <div class="grid" id="users-grid">
+                    <div class="loading">Chargement...</div>
+                </div>
+            </div>
+
+            <!-- Transports Tab -->
+            <div id="tab-transports" class="tab-content">
+                <div class="search-bar">
+                    <input type="text" id="search-transports" placeholder="Rechercher un transport...">
+                    <button onclick="searchTransports()">Rechercher</button>
+                </div>
+                <div class="grid" id="transports-grid">
+                    <div class="loading">Chargement...</div>
+                </div>
+            </div>
+
+            <!-- Stations Tab -->
+            <div id="tab-stations" class="tab-content">
+                <div class="grid" id="stations-grid">
+                    <div class="loading">Chargement...</div>
+                </div>
+            </div>
+
+            <!-- Events Tab -->
+            <div id="tab-events" class="tab-content">
+                <div class="grid" id="events-grid">
+                    <div class="loading">Chargement...</div>
+                </div>
+            </div>
+
+            <!-- Zones Tab -->
+            <div id="tab-zones" class="tab-content">
+                <div class="grid" id="zones-grid">
+                    <div class="loading">Chargement...</div>
+                </div>
+            </div>
+
+            <!-- AI Search Tab -->
+            <div id="tab-ai" class="tab-content">
+                <h3>🤖 Recherche Intelligente avec Gemini AI</h3>
+                <p style="color: #666; margin-bottom: 20px;">Posez votre question en langage naturel, l'IA la convertira en SPARQL !</p>
+                
+                <div class="search-bar">
+                    <input type="text" id="ai-question" placeholder="Ex: Montre-moi tous les transports électriques" 
+                           value="Montre-moi tous les utilisateurs qui utilisent des transports électriques">
+                    <button onclick="askAI()">🤖 Demander à l'IA</button>
+                </div>
+
+                <div id="ai-insights" style="margin: 20px 0;"></div>
+                
+                <div id="ai-results"></div>
+            </div>
+
+            <!-- SPARQL Tab -->
+            <div id="tab-sparql" class="tab-content">
+                <div class="sparql-section">
+                    <h3>Exécuter une requête SPARQL</h3>
+                    <textarea id="sparql-query" placeholder="Entrez votre requête SPARQL ici...">PREFIX smartcity: <http://example.org/smartcity#>
+PREFIX ont: <http://www.co-ode.org/ontologies/ont.owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?user ?nom ?age
+WHERE {
+    ?user rdf:type ont:Citoyen .
+    ?user ont:Nom ?nom .
+    OPTIONAL { ?user ont:Age ?age }
+}</textarea>
+                    <button class="search-bar button" onclick="executeSPARQL()" style="margin-top: 10px; width: auto;">Exécuter</button>
+                    <div id="sparql-results"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                const stats = await response.json();
+                document.getElementById('stat-users').textContent = stats.totalUsers || 0;
+                document.getElementById('stat-transports').textContent = stats.totalTransports || 0;
+                document.getElementById('stat-stations').textContent = stats.totalStations || 0;
+                document.getElementById('stat-trajets').textContent = stats.totalTrajets || 0;
+                document.getElementById('stat-events').textContent = stats.totalEvents || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load users
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_URL}/users`);
+                const users = await response.json();
+                const grid = document.getElementById('users-grid');
+                
+                if (users.length === 0) {
+                    grid.innerHTML = '<p>Aucun utilisateur trouvé</p>';
+                    return;
+                }
+
+                grid.innerHTML = users.map(user => `
+                    <div class="card">
+                        <h3>${user.nom}</h3>
+                        <div class="card-info">
+                            <div class="info-row">
+                                <span class="info-label">Type:</span>
+                                <span class="badge badge-primary">${user.type}</span>
+                            </div>
+                            ${user.age ? `
+                            <div class="info-row">
+                                <span class="info-label">Âge:</span>
+                                <span class="info-value">${user.age} ans</span>
+                            </div>` : ''}
+                            ${user.email ? `
+                            <div class="info-row">
+                                <span class="info-label">Email:</span>
+                                <span class="info-value">${user.email}</span>
+                            </div>` : ''}
+                            ${user.transports.length > 0 ? `
+                            <div class="info-row">
+                                <span class="info-label">Transports:</span>
+                                <span class="info-value">${user.transports.length}</span>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('users-grid').innerHTML = '<div class="error">Erreur de chargement</div>';
+            }
+        }
+
+        // Load transports
+        async function loadTransports() {
+            try {
+                const response = await fetch(`${API_URL}/transports`);
+                const transports = await response.json();
+                const grid = document.getElementById('transports-grid');
+                
+                if (transports.length === 0) {
+                    grid.innerHTML = '<p>Aucun transport trouvé</p>';
+                    return;
+                }
+
+                grid.innerHTML = transports.map(transport => `
+                    <div class="card">
+                        <h3>${transport.nom}</h3>
+                        <div class="card-info">
+                            <div class="info-row">
+                                <span class="info-label">Type:</span>
+                                <span class="badge badge-primary">${transport.type}</span>
+                            </div>
+                            ${transport.capacite ? `
+                            <div class="info-row">
+                                <span class="info-label">Capacité:</span>
+                                <span class="info-value">${transport.capacite} places</span>
+                            </div>` : ''}
+                            ${transport.immatriculation ? `
+                            <div class="info-row">
+                                <span class="info-label">Immatriculation:</span>
+                                <span class="info-value">${transport.immatriculation}</span>
+                            </div>` : ''}
+                            <div class="info-row">
+                                <span class="info-label">Électrique:</span>
+                                <span class="badge ${transport.electrique ? 'badge-success' : 'badge-warning'}">
+                                    ${transport.electrique ? 'Oui' : 'Non'}
+                                </span>
+                            </div>
+                            ${transport.zone ? `
+                            <div class="info-row">
+                                <span class="info-label">Zone:</span>
+                                <span class="info-value">${transport.zone}</span>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('transports-grid').innerHTML = '<div class="error">Erreur de chargement</div>';
+            }
+        }
+
+        // Load stations
+        async function loadStations() {
+            try {
+                const response = await fetch(`${API_URL}/stations`);
+                const stations = await response.json();
+                const grid = document.getElementById('stations-grid');
+                
+                if (stations.length === 0) {
+                    grid.innerHTML = '<p>Aucune station trouvée</p>';
+                    return;
+                }
+
+                grid.innerHTML = stations.map(station => `
+                    <div class="card">
+                        <h3>${station.nom}</h3>
+                        <div class="card-info">
+                            <div class="info-row">
+                                <span class="info-label">Type:</span>
+                                <span class="badge badge-primary">${station.type}</span>
+                            </div>
+                            ${station.latitude && station.longitude ? `
+                            <div class="info-row">
+                                <span class="info-label">Coordonnées:</span>
+                                <span class="info-value">${station.latitude.toFixed(2)}, ${station.longitude.toFixed(2)}</span>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('stations-grid').innerHTML = '<div class="error">Erreur de chargement</div>';
+            }
+        }
+
+        // Load events
+        async function loadEvents() {
+            try {
+                const response = await fetch(`${API_URL}/events`);
+                const events = await response.json();
+                const grid = document.getElementById('events-grid');
+                
+                if (events.length === 0) {
+                    grid.innerHTML = '<p>Aucun événement trouvé</p>';
+                    return;
+                }
+
+                grid.innerHTML = events.map(event => `
+                    <div class="card">
+                        <h3>${event.nom}</h3>
+                        <div class="card-info">
+                            <div class="info-row">
+                                <span class="info-label">Type:</span>
+                                <span class="badge badge-danger">${event.type}</span>
+                            </div>
+                            ${event.gravite ? `
+                            <div class="info-row">
+                                <span class="info-label">Gravité:</span>
+                                <span class="info-value">${event.gravite}/5</span>
+                            </div>` : ''}
+                            ${event.date ? `
+                            <div class="info-row">
+                                <span class="info-label">Date:</span>
+                                <span class="info-value">${new Date(event.date).toLocaleDateString('fr-FR')}</span>
+                            </div>` : ''}
+                            ${event.trajet ? `
+                            <div class="info-row">
+                                <span class="info-label">Trajet impacté:</span>
+                                <span class="info-value">${event.trajet}</span>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('events-grid').innerHTML = '<div class="error">Erreur de chargement</div>';
+            }
+        }
+
+        // Load zones
+        async function loadZones() {
+            try {
+                const response = await fetch(`${API_URL}/zones`);
+                const zones = await response.json();
+                const grid = document.getElementById('zones-grid');
+                
+                if (zones.length === 0) {
+                    grid.innerHTML = '<p>Aucune zone trouvée</p>';
+                    return;
+                }
+
+                grid.innerHTML = zones.map(zone => `
+                    <div class="card">
+                        <h3>${zone.nom}</h3>
+                        <div class="card-info">
+                            <div class="info-row">
+                                <span class="info-label">Type:</span>
+                                <span class="badge badge-primary">${zone.type}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Transports:</span>
+                                <span class="info-value">${zone.totalTransports}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('zones-grid').innerHTML = '<div class="error">Erreur de chargement</div>';
+            }
+        }
+
+        // Execute SPARQL query
+        async function executeSPARQL() {
+            const query = document.getElementById('sparql-query').value;
+            const resultsDiv = document.getElementById('sparql-results');
+            resultsDiv.innerHTML = '<div class="loading">Exécution de la requête...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.results.length === 0) {
+                        resultsDiv.innerHTML = '<p>Aucun résultat</p>';
+                        return;
+                    }
+
+                    const keys = Object.keys(data.results[0]);
+                    resultsDiv.innerHTML = `
+                        <h4>Résultats (${data.count})</h4>
+                        <table class="results-table">
+                            <thead>
+                                <tr>${keys.map(key => `<th>${key}</th>`).join('')}</tr>
+                            </thead>
+                            <tbody>
+                                ${data.results.map(row => `
+                                    <tr>${keys.map(key => `<td>${row[key] || '-'}</td>`).join('')}</tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">Erreur: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">Erreur de requête</div>';
+            }
+        }
+
+        // AI-powered natural language query
+        async function askAI() {
+            const question = document.getElementById('ai-question').value;
+            const resultsDiv = document.getElementById('ai-results');
+            resultsDiv.innerHTML = '<div class="loading">🤖 L\'IA analyse votre question...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/ai/natural-query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const keys = data.results.length > 0 ? Object.keys(data.results[0]) : [];
+                    resultsDiv.innerHTML = `
+                        <div style="background: #e7f5ff; border: 2px solid #339af0; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <h4 style="color: #1971c2; margin-bottom: 10px;">✨ Question: ${data.question}</h4>
+                            <p style="color: #495057;"><strong>Explication:</strong> ${data.explanation}</p>
+                        </div>
+                        
+                        <details style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                            <summary style="cursor: pointer; font-weight: 600; color: #667eea;">
+                                📝 Requête SPARQL générée par l'IA
+                            </summary>
+                            <pre style="background: white; padding: 15px; border-radius: 8px; overflow-x: auto; margin-top: 10px;">
+${data.generatedQuery}</pre>
+                        </details>
+
+                        ${data.results.length > 0 ? `
+                            <h4>Résultats (${data.count})</h4>
+                            <table class="results-table">
+                                <thead>
+                                    <tr>${keys.map(key => `<th>${key}</th>`).join('')}</tr>
+                                </thead>
+                                <tbody>
+                                    ${data.results.map(row => `
+                                        <tr>${keys.map(key => `<td>${row[key] || '-'}</td>`).join('')}</tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        ` : '<p>Aucun résultat trouvé</p>'}
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ Erreur: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">❌ Erreur de connexion à l\'IA</div>';
+                console.error(error);
+            }
+        }
+
+        // Load AI insights
+        async function loadAIInsights() {
+            try {
+                const response = await fetch(`${API_URL}/ai/insights`);
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('ai-insights').innerHTML = `
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                    color: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                            <h4 style="margin-bottom: 10px;">💡 Insights IA sur votre Smart City</h4>
+                            <p style="line-height: 1.6;">${data.insights}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading AI insights:', error);
+            }
+        }
+
+        // Execute SPARQL query
+        async function executeSPARQL() {
+            const query = document.getElementById('sparql-query').value;
+            const resultsDiv = document.getElementById('sparql-results');
+            resultsDiv.innerHTML = '<div class="loading">Exécution de la requête...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.results.length === 0) {
+                        resultsDiv.innerHTML = '<p>Aucun résultat</p>';
+                        return;
+                    }
+
+                    const keys = Object.keys(data.results[0]);
+                    resultsDiv.innerHTML = `
+                        <h4>Résultats (${data.count})</h4>
+                        <table class="results-table">
+                            <thead>
+                                <tr>${keys.map(key => `<th>${key}</th>`).join('')}</tr>
+                            </thead>
+                            <tbody>
+                                ${data.results.map(row => `
+                                    <tr>${keys.map(key => `<td>${row[key] || '-'}</td>`).join('')}</tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">Erreur: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">Erreur de requête</div>';
+            }
+        }
+
+        // Switch tabs
+        function switchTab(tabName) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Add active class to selected tab
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            // Load data for the tab
+            switch(tabName) {
+                case 'users':
+                    loadUsers();
+                    break;
+                case 'transports':
+                    loadTransports();
+                    break;
+                case 'stations':
+                    loadStations();
+                    break;
+                case 'events':
+                    loadEvents();
+                    break;
+                case 'zones':
+                    loadZones();
+                    break;
+                case 'ai':
+                    loadAIInsights();
+                    break;
+            }
+        }
+
+        // Initialize
+        window.onload = function() {
+            loadStats();
+            loadUsers();
+        };
+    </script>
+</body>
+</html>

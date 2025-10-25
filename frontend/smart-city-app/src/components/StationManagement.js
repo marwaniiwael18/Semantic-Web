@@ -17,6 +17,7 @@ const StationManagement = ({ onUpdate }) => {
   const [viewMode, setViewMode] = useState('map'); // 'map' or 'table'
   const [addMode, setAddMode] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const [formData, setFormData] = useState({
     nom: '',
     type: 'StationBus',
@@ -83,9 +84,8 @@ const StationManagement = ({ onUpdate }) => {
     loadStations();
   }, [loadStations]);
 
-  // Initialize map only when in map view
+  // Initialize map only once on component mount
   useEffect(() => {
-    if (viewMode !== 'map') return; // Only initialize when map view is active
     if (map.current) return; // Map already initialized
     if (!mapContainer.current) return; // Wait for container to be ready
     
@@ -126,9 +126,9 @@ const StationManagement = ({ onUpdate }) => {
           }
         });
 
-        // Resize map when loaded
+        // Mark map as loaded when ready
         map.current.on('load', () => {
-          map.current.resize();
+          setMapLoaded(true);
         });
       } catch (error) {
         console.error('Error initializing map:', error);
@@ -140,17 +140,23 @@ const StationManagement = ({ onUpdate }) => {
 
     return () => {
       clearTimeout(timeoutId);
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode]);
+  }, []);
 
-  // Update markers when stations change
+  // Resize map when switching to map view
   useEffect(() => {
-    if (!map.current) return;
+    if (viewMode === 'map' && map.current && mapLoaded) {
+      // Small delay to ensure the container is visible
+      setTimeout(() => {
+        map.current.resize();
+      }, 100);
+    }
+  }, [viewMode, mapLoaded]);
+
+  // Update markers when stations change or map loads
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
     
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
@@ -196,7 +202,7 @@ const StationManagement = ({ onUpdate }) => {
         markers.current.push(marker);
       }
     });
-  }, [stations, getStationIcon]);
+  }, [stations, getStationIcon, mapLoaded]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -386,30 +392,40 @@ const StationManagement = ({ onUpdate }) => {
         </div>
       </div>
 
-      {viewMode === 'map' ? (
-        <div style={{flex: 1, position: 'relative', marginTop: '20px', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.1)'}}>
-          <div 
-            ref={mapContainer} 
-            style={{width: '100%', height: '600px'}}
-          />
-          
-          {/* Station count badge */}
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '20px',
-            background: 'white',
-            padding: '15px 25px',
-            borderRadius: '12px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            fontWeight: '700',
-            fontSize: '16px',
-            color: '#667eea'
-          }}>
-            📍 {stations.length} Station{stations.length !== 1 ? 's' : ''}
-          </div>
+      {/* Map container - always rendered but hidden when in table view */}
+      <div style={{
+        flex: 1, 
+        position: 'relative', 
+        marginTop: '20px', 
+        borderRadius: '16px', 
+        overflow: 'hidden', 
+        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+        display: viewMode === 'map' ? 'block' : 'none'
+      }}>
+        <div 
+          ref={mapContainer} 
+          style={{width: '100%', height: '600px'}}
+        />
+        
+        {/* Station count badge */}
+        <div style={{
+          position: 'absolute',
+          bottom: '20px',
+          left: '20px',
+          background: 'white',
+          padding: '15px 25px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          fontWeight: '700',
+          fontSize: '16px',
+          color: '#667eea'
+        }}>
+          📍 {stations.length} Station{stations.length !== 1 ? 's' : ''}
         </div>
-      ) : (
+      </div>
+
+      {/* Table view */}
+      {viewMode === 'table' && (
         <div style={{marginTop: '20px'}}>
           {stations.length === 0 ? (
             <div className="empty-state">

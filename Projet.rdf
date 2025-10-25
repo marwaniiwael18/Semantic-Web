@@ -60,12 +60,6 @@
     <owl:equivalentClass rdf:nodeID="N0b8e0e0fdc9d4e808081c4649f25337a"/>
     <owl:equivalentClass rdf:nodeID="N02dccc7f1df14f26acc1e3319c21a333"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Station_2">
-    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#StationMétro"/>
-    <ont:aNomStation>Bab el bhar</ont:aNomStation>
-    <ont:aLatitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">36.866264</ont:aLatitude>
-    <ont:aLongitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">10.201413</ont:aLongitude>
-  </rdf:Description>
   <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Zone_1">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
     <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#CentreVille"/>
@@ -163,7 +157,9 @@
     <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Accident"/>
     <smartcity:impacte rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Trajet_1"/>
     <ont:Nom>AccidentX</ont:Nom>
-    <ont:aDateEvenement rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2025-09-27T08:00:00</ont:aDateEvenement>
+    <ont:aDateEvenement rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2025-09-27T00:00:00</ont:aDateEvenement>
+    <ont:aDescription>fsdfsdf</ont:aDescription>
+    <ont:aGravite rdf:datatype="http://www.w3.org/2001/XMLSchema#int">3</ont:aGravite>
   </rdf:Description>
   <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Utilisateur_1">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#NamedIndividual"/>
@@ -173,6 +169,12 @@
     <ont:Email>ali@gmail.com</ont:Email>
     <ont:Nom>Ali</ont:Nom>
     <ont:MotDePasse>ali123</ont:MotDePasse>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Station_3">
+    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#StationBus"/>
+    <ont:aNomStation>Testt</ont:aNomStation>
+    <ont:aLatitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">36.841609</ont:aLatitude>
+    <ont:aLongitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">10.173057</ont:aLongitude>
   </rdf:Description>
   <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Nom">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
@@ -255,6 +257,12 @@
   <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Accident">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
     <rdfs:subClassOf rdf:resource="http://example.org/smartcity#EvenementDeCirculation"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.co-ode.org/ontologies/ont.owl#Station_4">
+    <rdf:type rdf:resource="http://www.co-ode.org/ontologies/ont.owl#Parking"/>
+    <ont:aNomStation>Testt1231</ont:aNomStation>
+    <ont:aLatitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">36.846395</ont:aLatitude>
+    <ont:aLongitude rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">10.189315</ont:aLongitude>
   </rdf:Description>
   <rdf:Description rdf:about="http://example.org/smartcity#aHoraire">
     <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>

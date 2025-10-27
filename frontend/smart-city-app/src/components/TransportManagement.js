@@ -1,5 +1,7 @@
 // TransportManagement.js - Module CRUD pour Wael Marouani
 import React, { useState, useEffect } from 'react';
+import { validateTransport } from '../utils/validation';
+import { useConfirm } from './ConfirmProvider';
 
 const API_URL = 'http://localhost:5001/api';
 
@@ -22,6 +24,8 @@ const TransportManagement = ({ onUpdate }) => {
     vitesseMax: '',
     electrique: 'false'
   });
+  const [errors, setErrors] = useState({});
+  const confirm = useConfirm();
 
   useEffect(() => {
     loadTransports();
@@ -48,6 +52,12 @@ const TransportManagement = ({ onUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const { valid, errors: vErrors } = validateTransport(formData);
+    setErrors(vErrors);
+    if (!valid) {
+      showNotification('Veuillez corriger les erreurs du formulaire', 'error');
+      return;
+    }
     
     try {
       // First, upload image if there's one
@@ -132,7 +142,7 @@ const TransportManagement = ({ onUpdate }) => {
   };
 
   const handleDelete = async (transportId) => {
-    if (window.confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce transport?')) {
+    if (await confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce transport?')) {
       try {
         const response = await fetch(`${API_URL}/transports/${transportId}`, {
           method: 'DELETE'
@@ -365,17 +375,18 @@ const TransportManagement = ({ onUpdate }) => {
               <button className="close-btn" onClick={closeModal}>✕</button>
             </div>
             
-            <form onSubmit={handleSubmit} className="modal-form">
+            <form onSubmit={handleSubmit} className="modal-form" noValidate>
               <div className="form-row">
                 <div className="form-group">
                   <label>Nom du transport *</label>
                   <input
                     type="text"
                     value={formData.nom}
-                    onChange={(e) => setFormData({...formData, nom: e.target.value})}
+                      onChange={(e) => { setFormData({...formData, nom: e.target.value}); setErrors({...errors, nom: null}); }}
                     placeholder="Ex: Bus Rapide 101"
                     required
                   />
+                  {errors.nom && <div className="field-error">{errors.nom}</div>}
                 </div>
 
                 <div className="form-group">
@@ -400,10 +411,11 @@ const TransportManagement = ({ onUpdate }) => {
                   <input
                     type="number"
                     value={formData.capacite}
-                    onChange={(e) => setFormData({...formData, capacite: e.target.value})}
+                    onChange={(e) => { setFormData({...formData, capacite: e.target.value}); setErrors({...errors, capacite: null}); }}
                     placeholder="Ex: 50"
                     min="1"
                   />
+                  {errors.capacite && <div className="field-error">{errors.capacite}</div>}
                 </div>
 
                 <div className="form-group">
@@ -411,9 +423,10 @@ const TransportManagement = ({ onUpdate }) => {
                   <input
                     type="text"
                     value={formData.immatriculation}
-                    onChange={(e) => setFormData({...formData, immatriculation: e.target.value})}
+                    onChange={(e) => { setFormData({...formData, immatriculation: e.target.value}); setErrors({...errors, immatriculation: null}); }}
                     placeholder="Ex: BUS-101-TN"
                   />
+                  {errors.immatriculation && <div className="field-error">{errors.immatriculation}</div>}
                 </div>
               </div>
 
@@ -423,10 +436,11 @@ const TransportManagement = ({ onUpdate }) => {
                   <input
                     type="number"
                     value={formData.vitesseMax}
-                    onChange={(e) => setFormData({...formData, vitesseMax: e.target.value})}
+                    onChange={(e) => { setFormData({...formData, vitesseMax: e.target.value}); setErrors({...errors, vitesseMax: null}); }}
                     placeholder="Ex: 90"
                     min="1"
                   />
+                  {errors.vitesseMax && <div className="field-error">{errors.vitesseMax}</div>}
                 </div>
 
                 <div className="form-group">

@@ -2,39 +2,48 @@
 import React, { useState, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import TransportManagement from './TransportManagement';
+import StationManagement from './StationManagement';
+import EventManagement from './EventManagement';
+import ZoneManagement from './ZoneManagement';
+import AISparqlTool from './AISparqlTool';
 
 const API_URL = 'http://localhost:5001/api';
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN;
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
-const Dashboard = ({ stats, user, onNavigate }) => {
+const Dashboard = ({ stats = {}, user = {}, onNavigate = () => {} }) => {
   const [stations, setStations] = useState([]);
   const [events, setEvents] = useState([]);
   const [mapReady, setMapReady] = useState(false);
-  
+  const [activeTab, setActiveTab] = useState('dashboard');
+
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markers = useRef([]);
 
   useEffect(() => {
     loadDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadDashboardData = async () => {
     try {
-      // Load stations
       const stationsRes = await fetch(`${API_URL}/stations`);
       const stationsData = await stationsRes.json();
-      setStations(stationsData);
+      setStations(Array.isArray(stationsData) ? stationsData : []);
 
-      // Load events
       const eventsRes = await fetch(`${API_URL}/events`);
       const eventsData = await eventsRes.json();
-      setEvents(eventsData.slice(0, 5)); // Get latest 5 events
+      setEvents(Array.isArray(eventsData) ? eventsData.slice(0, 5) : []);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     }
+  };
+
+  const refreshStats = async () => {
+    await loadDashboardData();
   };
 
   // Initialize map
@@ -49,7 +58,7 @@ const Dashboard = ({ stats, user, onNavigate }) => {
           container: mapContainer.current,
           style: 'mapbox://styles/mapbox/streets-v12',
           center: [10.1815, 36.8065],
-          zoom: 11
+          zoom: 11,
         });
 
         map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -58,9 +67,8 @@ const Dashboard = ({ stats, user, onNavigate }) => {
           setMapReady(true);
           map.current.resize();
         });
-
-      } catch (error) {
-        console.error('Error initializing map:', error);
+      } catch (err) {
+        console.error('Error initializing map:', err);
       }
     }, 100);
 
@@ -78,29 +86,24 @@ const Dashboard = ({ stats, user, onNavigate }) => {
   useEffect(() => {
     if (!map.current || !mapReady) return;
 
-    // Clear existing markers
-    markers.current.forEach(marker => marker.remove());
+    markers.current.forEach((m) => m.remove());
     markers.current = [];
 
-    // Add station markers
-    stations.forEach(station => {
+    stations.forEach((station) => {
       if (station.latitude && station.longitude) {
         const el = document.createElement('div');
         el.className = 'dashboard-marker station-marker';
         el.innerHTML = getStationIcon(station.type);
         el.style.fontSize = '24px';
-        el.style.cursor = 'pointer';
 
         const marker = new mapboxgl.Marker(el)
           .setLngLat([station.longitude, station.latitude])
           .setPopup(
-            new mapboxgl.Popup({ offset: 25 })
-              .setHTML(`
-                <div style="padding: 8px;">
-                  <h4 style="margin: 0 0 6px 0;">${getStationIcon(station.type)} ${station.nom}</h4>
-                  <p style="margin: 0; font-size: 12px; color: #666;">${station.type}</p>
-                </div>
-              `)
+            new mapboxgl.Popup({ offset: 25 }).setHTML(
+              `<div style="padding:8px;"><h4 style="margin:0 0 6px 0;">${getStationIcon(
+                station.type
+              )} ${station.nom}</h4><p style="margin:0;font-size:12px;color:#666;">${station.type}</p></div>`
+            )
           )
           .addTo(map.current);
 
@@ -108,26 +111,19 @@ const Dashboard = ({ stats, user, onNavigate }) => {
       }
     });
 
-    // Add event markers
-    events.forEach(event => {
+    events.forEach((event) => {
       if (event.latitude && event.longitude) {
         const el = document.createElement('div');
         el.className = 'dashboard-marker event-marker';
         el.innerHTML = '⚠️';
         el.style.fontSize = '20px';
-        el.style.cursor = 'pointer';
-        el.style.filter = 'drop-shadow(0 2px 4px rgba(255,0,0,0.3))';
 
         const marker = new mapboxgl.Marker(el)
           .setLngLat([event.longitude || 10.1815, event.latitude || 36.8065])
           .setPopup(
-            new mapboxgl.Popup({ offset: 25 })
-              .setHTML(`
-                <div style="padding: 8px;">
-                  <h4 style="margin: 0 0 6px 0;">⚠️ ${event.nom}</h4>
-                  <p style="margin: 0; font-size: 12px; color: #666;">${event.type}</p>
-                </div>
-              `)
+            new mapboxgl.Popup({ offset: 25 }).setHTML(
+              `<div style="padding:8px;"><h4 style="margin:0 0 6px 0;">⚠️ ${event.nom}</h4><p style="margin:0;font-size:12px;color:#666;">${event.type}</p></div>`
+            )
           )
           .addTo(map.current);
 
@@ -137,12 +133,17 @@ const Dashboard = ({ stats, user, onNavigate }) => {
   }, [stations, events, mapReady]);
 
   const getStationIcon = (type) => {
-    switch(type) {
-      case 'StationBus': return '🚌';
-      case 'StationMétro': return '🚇';
-      case 'Parking': return '🅿️';
-      case 'StationVelo': return '🚲';
-      default: return '📍';
+    switch (type) {
+      case 'StationBus':
+        return '🚌';
+      case 'StationMétro':
+        return '🚇';
+      case 'Parking':
+        return '🅿️';
+      case 'StationVelo':
+        return '🚲';
+      default:
+        return '📍';
     }
   };
 
@@ -161,19 +162,21 @@ const Dashboard = ({ stats, user, onNavigate }) => {
           <p>Here's what's happening with your Smart City infrastructure today</p>
         </div>
         <div className="welcome-time">
-          <span className="current-time">{new Date().toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}</span>
+          <span className="current-time">
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </span>
         </div>
       </div>
 
       {/* Stats Overview */}
       <div className="dashboard-stats-grid">
         <div className="stat-card" onClick={() => onNavigate('users')}>
-          <div className="stat-icon" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
             👥
           </div>
           <div className="stat-content">
@@ -184,7 +187,7 @@ const Dashboard = ({ stats, user, onNavigate }) => {
         </div>
 
         <div className="stat-card" onClick={() => onNavigate('transports')}>
-          <div className="stat-icon" style={{background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'}}>
+          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}>
             🚌
           </div>
           <div className="stat-content">
@@ -195,7 +198,7 @@ const Dashboard = ({ stats, user, onNavigate }) => {
         </div>
 
         <div className="stat-card" onClick={() => onNavigate('stations')}>
-          <div className="stat-icon" style={{background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'}}>
+          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' }}>
             📍
           </div>
           <div className="stat-content">
@@ -206,7 +209,7 @@ const Dashboard = ({ stats, user, onNavigate }) => {
         </div>
 
         <div className="stat-card" onClick={() => onNavigate('events')}>
-          <div className="stat-icon" style={{background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'}}>
+          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' }}>
             ⚠️
           </div>
           <div className="stat-content">
@@ -217,149 +220,96 @@ const Dashboard = ({ stats, user, onNavigate }) => {
         </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="dashboard-content-grid">
-        {/* Map View */}
-        <div className="dashboard-section map-section">
-          <div className="section-header">
-            <h3>🗺️ City Overview Map</h3>
-            <div className="map-legend">
-              <span className="legend-item"><span className="legend-icon">🚌</span> Stations</span>
-              <span className="legend-item"><span className="legend-icon">⚠️</span> Events</span>
-            </div>
-          </div>
-          <div 
-            ref={mapContainer} 
-            className="dashboard-map"
-            style={{
-              width: '100%',
-              height: '450px',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.1)'
-            }}
-          />
-          <div className="map-footer">
-            <span className="map-info">📍 {stations.length} stations</span>
-            <span className="map-info">⚠️ {events.length} active events</span>
-          </div>
-        </div>
-
-        {/* Recent Events */}
-        <div className="dashboard-section">
-          <div className="section-header">
-            <h3>⚠️ Recent Events</h3>
-            <button className="btn-link" onClick={() => onNavigate('events')}>View All →</button>
-          </div>
-          <div className="events-list">
-            {events.length === 0 ? (
-              <div className="empty-state-small">
-                <span>✅</span>
-                <p>No active events</p>
-              </div>
-            ) : (
-              events.map((event, index) => (
-                <div key={index} className="event-item">
-                  <div className="event-icon" style={{
-                    background: getEventSeverityColor(event.gravite || 3)
-                  }}>
-                    ⚠️
-                  </div>
-                  <div className="event-details">
-                    <h4>{event.nom}</h4>
-                    <p>{event.type} • {event.description?.substring(0, 50) || 'No description'}</p>
-                  </div>
-                  <div className="event-severity">
-                    <div className="severity-indicator-small">
-                      {[1, 2, 3, 4, 5].map(dot => (
-                        <div 
-                          key={dot} 
-                          className={`severity-dot-small ${dot <= (event.gravite || 0) ? 'active' : ''}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+      <div className="tabs">
+        <button className={`tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+          📊 Dashboard
+        </button>
+        <button className={`tab ${activeTab === 'transports' ? 'active' : ''}`} onClick={() => setActiveTab('transports')}>
+          🚌 Transports
+        </button>
+        <button className={`tab ${activeTab === 'stations' ? 'active' : ''}`} onClick={() => setActiveTab('stations')}>
+          📍 Stations
+        </button>
+        <button className={`tab ${activeTab === 'events' ? 'active' : ''}`} onClick={() => setActiveTab('events')}>
+          ⚠️ Events
+        </button>
+        <button className={`tab ${activeTab === 'zones' ? 'active' : ''}`} onClick={() => setActiveTab('zones')}>
+          🏘️ Zones
+        </button>
       </div>
 
-      {/* Bottom Grid */}
-      <div className="dashboard-bottom-grid">
-        {/* Quick Actions */}
-        <div className="dashboard-section">
-          <div className="section-header">
-            <h3>🎯 Quick Actions</h3>
-          </div>
-          <div className="quick-actions-grid">
-            <div className="action-card" onClick={() => onNavigate('transports')}>
-              <span className="action-icon">🚌</span>
-              <div>
-                <strong>Manage Transports</strong>
-                <p>Buses, metros, bikes & more</p>
-              </div>
-            </div>
-            <div className="action-card" onClick={() => onNavigate('stations')}>
-              <span className="action-icon">📍</span>
-              <div>
-                <strong>Manage Stations</strong>
-                <p>Transit hubs and parking</p>
-              </div>
-            </div>
-            <div className="action-card" onClick={() => onNavigate('events')}>
-              <span className="action-icon">⚠️</span>
-              <div>
-                <strong>Report Event</strong>
-                <p>Traffic incidents & construction</p>
-              </div>
-            </div>
-            <div className="action-card" onClick={() => onNavigate('zones')}>
-              <span className="action-icon">🏘️</span>
-              <div>
-                <strong>Manage Zones</strong>
-                <p>Urban areas and districts</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* System Info */}
-        <div className="dashboard-section">
-          <div className="section-header">
-            <h3>🛠️ System Information</h3>
-          </div>
-          <div className="system-info">
-            <div className="info-item">
-              <span className="info-icon">🔧</span>
-              <div>
-                <strong>Technology Stack</strong>
-                <div className="tech-badges-dashboard">
-                  <span className="tech-badge-tiny">React 18</span>
-                  <span className="tech-badge-tiny">Flask 3.0</span>
-                  <span className="tech-badge-tiny">RDFLib</span>
-                  <span className="tech-badge-tiny">SPARQL</span>
-                  <span className="tech-badge-tiny">Mapbox</span>
+      <div className="content">
+        {activeTab === 'dashboard' && (
+          <div className="dashboard-content-grid">
+            <div className="dashboard-section map-section">
+              <div className="section-header">
+                <h3>🗺️ City Overview Map</h3>
+                <div className="map-legend">
+                  <span className="legend-item">
+                    <span className="legend-icon">🚌</span> Stations
+                  </span>
+                  <span className="legend-item">
+                    <span className="legend-icon">⚠️</span> Events
+                  </span>
                 </div>
               </div>
-            </div>
-            <div className="info-item">
-              <span className="info-icon">🤖</span>
-              <div>
-                <strong>AI-Powered</strong>
-                <p>Google Gemini integration for intelligent insights</p>
+              <div ref={mapContainer} className="dashboard-map" style={{ width: '100%', height: '450px', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }} />
+              <div className="map-footer">
+                <span className="map-info">📍 {stations.length} stations</span>
+                <span className="map-info">⚠️ {events.length} active events</span>
               </div>
             </div>
-            <div className="info-item">
-              <span className="info-icon">🔄</span>
-              <div>
-                <strong>Real-time Updates</strong>
-                <p>Live data synchronization with RDF graph</p>
+
+            <div className="dashboard-section">
+              <div className="section-header">
+                <h3>⚠️ Recent Events</h3>
+                <button className="btn-link" onClick={() => onNavigate('events')}>View All →</button>
+              </div>
+              <div className="events-list">
+                {events.length === 0 ? (
+                  <div className="empty-state-small">
+                    <span>✅</span>
+                    <p>No active events</p>
+                  </div>
+                ) : (
+                  events.map((event, index) => (
+                    <div key={index} className="event-item">
+                      <div className="event-icon" style={{ background: getEventSeverityColor(event.gravite || 3) }}>
+                        ⚠️
+                      </div>
+                      <div className="event-details">
+                        <h4>{event.nom}</h4>
+                        <p>{event.type} • {(event.description && event.description.substring ? event.description.substring(0, 50) : 'No description')}</p>
+                      </div>
+                      <div className="event-severity">
+                        <div className="severity-indicator-small">
+                          {[1, 2, 3, 4, 5].map((dot) => (
+                            <div key={dot} className={`severity-dot-small ${dot <= (event.gravite || 0) ? 'active' : ''}`} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            
+            {/* AI NL → SPARQL tool */}
+            <div className="dashboard-section">
+              <div className="section-header">
+                <h3>🤖 Interroger le dataset (NL → SPARQL)</h3>
+              </div>
+              <div style={{ padding: 8 }}>
+                <AISparqlTool />
               </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {activeTab === 'transports' && <TransportManagement onUpdate={refreshStats} />}
+        {activeTab === 'stations' && <StationManagement onUpdate={refreshStats} />}
+        {activeTab === 'events' && <EventManagement onUpdate={refreshStats} />}
+        {activeTab === 'zones' && <ZoneManagement onUpdate={refreshStats} />}
       </div>
     </div>
   );

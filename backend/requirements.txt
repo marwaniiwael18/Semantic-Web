@@ -5,4 +5,5 @@ requests==2.31.0
 python-dotenv==1.0.0
 google-generativeai==0.8.5
 cloudinary==1.41.0
-pyparsing==3.0.9
+# Use pyparsing 2.4.7 because rdflib 7's SPARQL parser expects pyparsing 2.x API
+pyparsing==2.4.7

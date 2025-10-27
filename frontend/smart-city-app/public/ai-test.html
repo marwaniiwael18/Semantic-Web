@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI → SPARQL Test</title>
+  <style>
+    body{font-family:Inter,Segoe UI,Arial;margin:24px;background:#f7f9fc;color:#111}
+    .card{background:#fff;padding:18px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06);max-width:900px}
+    textarea{width:100%;height:90px;padding:8px;font-size:14px}
+    button{padding:10px 14px;border-radius:6px;border:0;background:#2563eb;color:#fff;cursor:pointer}
+    pre{background:#0f172a;color:#e6eef8;padding:12px;border-radius:6px;overflow:auto}
+    .row{display:flex;gap:12px;align-items:center}
+    label{font-weight:600}
+    .small{font-size:13px;color:#475569}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>AI → SPARQL — Test rapide</h2>
+    <p class="small">Cette page envoie votre phrase (langage naturel) au backend `/api/ai/natural-query` et affiche la requête SPARQL générée, les résultats et une explication.</p>
+
+    <div style="margin-top:12px">
+      <label for="question">Question (français ou anglais)</label>
+      <textarea id="question" placeholder="Ex: Combien de stations y a-t-il dans la zone CentreVille ?">Combien de stations y a-t-il dans la zone CentreVille ?</textarea>
+    </div>
+
+    <div style="margin-top:12px" class="row">
+      <button id="send">Envoyer</button>
+      <button id="clear" style="background:#64748b">Effacer</button>
+      <span id="status" class="small">Statut: prêt</span>
+    </div>
+
+    <hr />
+
+    <h3>Generated SPARQL</h3>
+    <pre id="sparql">(aucune)</pre>
+
+    <h3>Results (JSON)</h3>
+    <pre id="results">(aucun)</pre>
+
+    <h3>Explanation</h3>
+    <pre id="explanation">(aucune)</pre>
+
+    <hr />
+    <p class="small">Note: assurez-vous que le backend tourne sur <code>http://127.0.0.1:5001</code> (CORS autorisé).</p>
+  </div>
+
+  <script>
+    const sendBtn = document.getElementById('send');
+    const clearBtn = document.getElementById('clear');
+    const questionEl = document.getElementById('question');
+    const statusEl = document.getElementById('status');
+    const sparqlEl = document.getElementById('sparql');
+    const resultsEl = document.getElementById('results');
+    const explanationEl = document.getElementById('explanation');
+
+    const API = 'http://127.0.0.1:5001/api/ai/natural-query';
+
+    sendBtn.addEventListener('click', async () => {
+      const q = questionEl.value.trim();
+      if (!q) return alert('Entrez une question.');
+
+      statusEl.textContent = 'Statut: envoi...';
+      sparqlEl.textContent = '(en attente...)';
+      resultsEl.textContent = '(en attente...)';
+      explanationEl.textContent = '(en attente...)';
+
+      try {
+        const res = await fetch(API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          statusEl.textContent = `Erreur: ${data.error || res.statusText}`;
+          sparqlEl.textContent = '(erreur)';
+          resultsEl.textContent = JSON.stringify(data, null, 2);
+          explanationEl.textContent = '';
+          return;
+        }
+
+        statusEl.textContent = 'Statut: OK';
+        sparqlEl.textContent = data.generatedQuery || '(aucune)';
+        resultsEl.textContent = JSON.stringify(data.results || data, null, 2);
+        explanationEl.textContent = data.explanation || '(aucune)';
+      } catch (err) {
+        statusEl.textContent = 'Erreur de réseau';
+        sparqlEl.textContent = '(erreur)';
+        resultsEl.textContent = String(err);
+        explanationEl.textContent = '';
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      questionEl.value = '';
+      sparqlEl.textContent = '(aucune)';
+      resultsEl.textContent = '(aucun)';
+      explanationEl.textContent = '(aucune)';
+      statusEl.textContent = 'Statut: prêt';
+    });
+  </script>
+</body>
+</html>

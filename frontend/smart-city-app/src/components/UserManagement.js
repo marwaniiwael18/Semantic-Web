@@ -1,5 +1,7 @@
 // UserManagement.js - Module CRUD pour Yassine Mannai
 import React, { useState, useEffect } from 'react';
+import { useToast } from './ToastProvider';
+import { useConfirm } from './ConfirmProvider';
 
 const API_URL = 'http://localhost:5001/api';
 
@@ -19,6 +21,8 @@ const UserManagement = ({ onUpdate }) => {
   useEffect(() => {
     loadUsers();
   }, []);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const loadUsers = async () => {
     setLoading(true);
@@ -39,17 +43,17 @@ const UserManagement = ({ onUpdate }) => {
     console.log('Soumission:', formData);
     
     // Pour l'instant, simulons l'ajout
-    alert(editingUser ? 'Utilisateur modifié!' : 'Nouvel utilisateur ajouté!');
+    toast.success(editingUser ? 'Utilisateur modifié!' : 'Nouvel utilisateur ajouté!');
     closeModal();
     loadUsers();
     if (onUpdate) onUpdate();
   };
 
   const handleDelete = async (userId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')) {
+    if (await confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?')) {
       // Implémenter l'API DELETE
       console.log('Suppression de:', userId);
-      alert('Utilisateur supprimé!');
+      toast.success('Utilisateur supprimé!');
       loadUsers();
       if (onUpdate) onUpdate();
     }

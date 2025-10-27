@@ -57,7 +57,7 @@ function App() {
         totalTransports: data.totalTransports || 0,
         totalStations: data.totalStations || 0,
         totalEvents: data.totalEvents || 0,
-        totalZones: 0
+        totalZones: data.totalZones || 0
       });
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -225,10 +225,6 @@ function App() {
         {activeTab === 'events' && <EventManagement onUpdate={refreshStats} />}
         {activeTab === 'zones' && <ZoneManagement onUpdate={refreshStats} />}
       </div>
-
-      <footer className="app-footer">
-        <p>Full CRUD operations: Create, Read, Update, Delete</p>
-      </footer>
     </div>
   );
 }

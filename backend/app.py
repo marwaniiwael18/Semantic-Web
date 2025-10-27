@@ -1,11 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from rdflib import Graph, Namespace, RDF, RDFS, OWL
+from rdflib import Graph, Namespace, RDF, RDFS, OWL, Literal, URIRef
+from rdflib.namespace import XSD
 from rdflib.plugins.sparql import prepareQuery
+import re
 import os
 import json
 import requests
 from datetime import datetime
+import sys
 from ai_helper import (
     generate_sparql_from_natural_language,
     get_ai_suggestions,
@@ -16,6 +19,76 @@ from ai_helper import (
 from cloudinary_helper import upload_profile_image, delete_profile_image, upload_station_image
 
 app = Flask(__name__)
+
+# Quick compatibility check: detect mismatched pyparsing / rdflib versions early
+try:
+    import pyparsing
+    import rdflib
+    pyver = getattr(pyparsing, '__version__', None)
+    rdver = getattr(rdflib, '__version__', None)
+    if pyver is None:
+        print("WARNING: pyparsing is installed but its __version__ is not available.")
+    else:
+        # rdflib 7.x expects pyparsing 2.x API. If pyparsing is 3.x, the SPARQL parser
+        # may raise TypeError at runtime (see parser.postParse2 signature mismatches).
+        if not pyver.startswith('2.'):
+            # Provide a clearer, actionable error with both versions printed.
+            print('\nERROR: Incompatible pyparsing version detected: ' + str(pyver))
+            print('rdflib version detected: ' + str(rdver))
+            print('rdflib 7.x requires pyparsing 2.x (e.g. 2.4.7).\n')
+            print('To fix this environment, run (PowerShell):')
+            print('    python -m pip install --upgrade pip; python -m pip install --force-reinstall -r backend/requirements.txt')
+            print('\nOr to install only pyparsing 2.4.7:')
+            print('    python -m pip install --force-reinstall pyparsing==2.4.7')
+            # Exit early to avoid confusing runtime parse errors in SPARQL handling.
+            sys.exit(1)
+except Exception as _e:
+    # Don't block startup if the check itself fails; just log the error.
+    print('Warning: version check for pyparsing/rdflib failed:', str(_e))
+
+
+def enrich_results_with_labels(result_list):
+    """
+    For each row in result_list, detect values that look like URIs and try to
+    replace them with a human-friendly label when available (rdfs:label or ont:Nom).
+    Fallback: shorten the URI to its last segment.
+    This mutates result_list in-place.
+    """
+    try:
+        from rdflib import URIRef
+        ont_nom = URIRef('http://www.co-ode.org/ontologies/ont.owl#Nom')
+        for row in result_list:
+            for k, v in list(row.items()):
+                if v is None:
+                    continue
+                sv = str(v)
+                if sv.startswith('http://') or sv.startswith('https://') or ('#' in sv):
+                    # attempt to resolve label
+                    try:
+                        u = URIRef(sv)
+                        lab = g.value(u, RDFS.label)
+                        if lab is None:
+                            lab = g.value(u, ont_nom)
+                        if lab is not None:
+                            row[k] = str(lab)
+                        else:
+                            # shorten URI
+                            if '#' in sv:
+                                row[k] = sv.split('#')[-1]
+                            else:
+                                row[k] = sv.rstrip('/').split('/')[-1]
+                    except Exception:
+                        # best-effort: shorten URI
+                        try:
+                            if '#' in sv:
+                                row[k] = sv.split('#')[-1]
+                            else:
+                                row[k] = sv.rstrip('/').split('/')[-1]
+                        except Exception:
+                            pass
+    except Exception:
+        # If anything fails, leave result_list as-is
+        return
 
 # Configure CORS to allow all origins and methods
 CORS(app, 
@@ -30,7 +103,63 @@ CORS(app,
 # Load RDF ontology
 g = Graph()
 rdf_file = os.path.join(os.path.dirname(__file__), '..', 'Projet.rdf')
-g.parse(rdf_file, format='xml')
+# Parse the RDF file. rdflib may raise on malformed dateTime literals (date-only strings
+# typed as xsd:dateTime). Try a normal parse first, and if it fails, perform a
+# tolerant text-based replacement of dateTime->date for date-only literals and parse from string.
+try:
+    g.parse(rdf_file, format='xml')
+except Exception as parse_err:
+    print('Initial RDF parse failed:', str(parse_err))
+    try:
+        import re
+        with open(rdf_file, 'r', encoding='utf-8') as fh:
+            src = fh.read()
+
+        # Replace occurrences where a literal contains only YYYY-MM-DD but is typed as xsd:dateTime
+        # e.g. rdf:Description ... ont:aDateEvenement rdf:datatype="...#dateTime">2025-10-27</...
+        pattern = re.compile(r"(datatype=\"[^\"]*dateTime[^\"]*\"[^>]*>)(\s*)(\d{4}-\d{2}-\d{2})(\s*<)", re.IGNORECASE)
+
+        def _fix(m):
+            # change dateTime -> date in the datatype attribute portion
+            head = m.group(1).replace('dateTime', 'date')
+            return head + m.group(2) + m.group(3) + m.group(4)
+
+        fixed = pattern.sub(_fix, src)
+
+        # Parse from the fixed string
+        g.parse(data=fixed, format='xml')
+        print('Parsed RDF from tolerant fallback (dateTime->date replacements applied).')
+    except Exception as e2:
+        print('Tolerant RDF parse also failed:', str(e2))
+        raise
+
+# Normalize date/datetime literals: rdflib will attempt to convert xsd:dateTime literals
+# to Python datetimes. Some literals in Projet.rdf are typed as xsd:dateTime but use
+# a date-only lexical form like '2025-10-27' (missing the 'T' time designator). That
+# causes conversion warnings. We'll normalize those to xsd:date to avoid parsing errors.
+try:
+    fixes = []
+    adds = []
+    for s, p, o in list(g.triples((None, None, None))):
+        if isinstance(o, Literal) and o.datatype:
+            # detect xsd:dateTime typed literals with no 'T' in the lexical form
+            if (str(o.datatype).endswith('dateTime') or o.datatype == XSD.dateTime) and 'T' not in str(o):
+                # create a date-typed literal instead
+                new_lit = Literal(str(o), datatype=XSD.date)
+                fixes.append((s, p, o))
+                adds.append((s, p, new_lit))
+
+    # apply removals and additions
+    for t in fixes:
+        g.remove(t)
+    for t in adds:
+        g.add(t)
+
+    if len(fixes) > 0:
+        print(f"Normalized {len(fixes)} dateTime literals to xsd:date to avoid parse warnings")
+except Exception as _e:
+    # Don't fail startup for this normalization; just log and continue
+    print("Date normalization warning:", str(_e))
 
 # Define namespaces
 SMARTCITY = Namespace("http://example.org/smartcity#")
@@ -57,12 +186,14 @@ def get_stats():
         (COUNT(DISTINCT ?user) as ?totalUsers)
         (COUNT(DISTINCT ?transport) as ?totalTransports)
         (COUNT(DISTINCT ?station) as ?totalStations)
+        (COUNT(DISTINCT ?zone) as ?totalZones)
         (COUNT(DISTINCT ?trajet) as ?totalTrajets)
         (COUNT(DISTINCT ?event) as ?totalEvents)
     WHERE {
         OPTIONAL { ?user rdf:type/rdfs:subClassOf* smartcity:Utilisateur }
         OPTIONAL { ?transport rdf:type/rdfs:subClassOf* smartcity:Transport }
         OPTIONAL { ?station rdf:type/rdfs:subClassOf* smartcity:Station }
+    OPTIONAL { ?zone rdf:type ?zoneType . ?zoneType rdfs:subClassOf* smartcity:ZoneUrbaine }
         OPTIONAL { ?trajet rdf:type smartcity:Trajet }
         OPTIONAL { ?event rdf:type/rdfs:subClassOf* smartcity:EvenementDeCirculation }
     }
@@ -74,6 +205,7 @@ def get_stats():
             "totalUsers": int(row.totalUsers),
             "totalTransports": int(row.totalTransports),
             "totalStations": int(row.totalStations),
+            "totalZones": int(row.totalZones),
             "totalTrajets": int(row.totalTrajets),
             "totalEvents": int(row.totalEvents)
         })
@@ -301,18 +433,24 @@ def execute_sparql():
     data = request.get_json()
     query_string = data.get('query', '')
     
+    # Preserve original query for debug/UI, but execute a DISTINCT-aware version
+    exec_query = query_string
     try:
-        results = g.query(query_string)
+        # If the user used COUNT(?var) without DISTINCT, replace with COUNT(DISTINCT ?var)
+        exec_query = re.sub(r"COUNT\(\s*(?!DISTINCT\b)\?([A-Za-z0-9_]+)\s*\)",
+                            r"COUNT(DISTINCT ?\1)", exec_query, flags=re.IGNORECASE)
+        results = g.query(exec_query)
+        # Build result_list from the rdflib results object
         result_list = []
-        
         for row in results:
             result_dict = {}
             for var in results.vars:
                 value = row[var]
-                if value:
+                # include zero/empty-string/falsey literals; only skip None
+                if value is not None:
                     result_dict[str(var)] = str(value)
             result_list.append(result_dict)
-        
+
         return jsonify({
             "success": True,
             "results": result_list,
@@ -449,32 +587,398 @@ def natural_language_query():
         return jsonify({"success": False, "error": "No question provided"}), 400
     
     try:
+        # Quick heuristic: if the user asks for "moyenne" of "gravite" over last N days,
+        # bypass the AI and run a safe, type-robust SPARQL that enforces numeric gravite
+        # and uses a concrete date window. This avoids false positives caused by
+        # mixed xsd:date/xsd:dateTime and non-numeric gravite values.
+        import re
+        from datetime import datetime as _dt, timedelta as _td
+
+        m_avg = re.search(r"moyenn?e|moyen|average", user_question, re.IGNORECASE)
+        m_grav = re.search(r"gravit", user_question, re.IGNORECASE)
+        if m_avg and m_grav:
+            # extract a day window if present (e.g., '30 derniers jours')
+            m_days = re.search(r"(\d+)\s*(?:derniers?|dernier|jours|jours)", user_question, re.IGNORECASE)
+            days = int(m_days.group(1)) if m_days else 30
+            start_date = (_dt.utcnow().date() - _td(days=days)).isoformat()
+
+            import textwrap
+            # Use a simple SELECT to fetch events with date and gravite, then compute average in Python.
+            safe_q = textwrap.dedent(f"""
+            PREFIX smartcity: <http://example.org/smartcity#>
+            PREFIX ont: <http://www.co-ode.org/ontologies/ont.owl#>
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+            SELECT ?e ?d ?grav
+            WHERE {{
+                ?e rdf:type/rdfs:subClassOf* smartcity:EvenementDeCirculation .
+                OPTIONAL {{ ?e ont:aDateEvenement ?d }}
+                OPTIONAL {{ ?e ont:aGravite ?grav }}
+                FILTER( STR(?d) >= "{start_date}" )
+            }}
+            """
+            ).strip()
+
+            try:
+                results_obj = g.query(safe_q)
+                total = 0.0
+                count_numeric = 0
+                events_seen = set()
+                for row in results_obj:
+                    # row vars: ?e, ?d, ?grav
+                    e = row.get('e')
+                    grav = row.get('grav')
+                    if e is None:
+                        continue
+                    events_seen.add(str(e))
+                    if grav is not None:
+                        try:
+                            v = float(str(grav))
+                            total += v
+                            count_numeric += 1
+                        except Exception:
+                            # non-numeric grav value -> skip
+                            pass
+
+                avg = None
+                if count_numeric > 0:
+                    avg = total / count_numeric
+
+                result_list = [{ 'avgGravite': str(avg) if avg is not None else None, 'countEvents': len(events_seen) }]
+
+                # If there were events but none had numeric gravite, collect sample grav values for diagnostics
+                diagnostic_grav_values = None
+                if len(events_seen) > 0 and count_numeric == 0:
+                    try:
+                        diag_q = textwrap.dedent(f"""
+                        PREFIX smartcity: <http://example.org/smartcity#>
+                        PREFIX ont: <http://www.co-ode.org/ontologies/ont.owl#>
+                        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+                        SELECT DISTINCT ?grav WHERE {{
+                            ?e rdf:type/rdfs:subClassOf* smartcity:EvenementDeCirculation .
+                            OPTIONAL {{ ?e ont:aDateEvenement ?d }}
+                            OPTIONAL {{ ?e ont:aGravite ?grav }}
+                            FILTER( STR(?d) >= "{start_date}" )
+                        }} LIMIT 20
+                        """
+                        ).strip()
+                        diag_res = g.query(diag_q)
+                        diagnostic_grav_values = [str(r.grav) for r in diag_res if getattr(r, 'grav', None) is not None]
+                    except Exception:
+                        diagnostic_grav_values = None
+
+                explanation = explain_sparql_results(safe_q, len(result_list))
+                user_message = f"Requête sécurisée exécutée : moyenne sur les {days} derniers jours (à partir de {start_date})."
+                resp = {
+                    "success": True,
+                    "question": user_question,
+                    "generatedQuery": None,
+                    "executedQuery": safe_q,
+                    "results": result_list,
+                    "count": len(result_list),
+                    "explanation": explanation,
+                    "userMessage": user_message,
+                    "diagnosticGravValues": diagnostic_grav_values
+                }
+                return jsonify(resp)
+            except Exception as e:
+                # If the safe query fails for any reason, log and fall through to the AI path
+                print('Safe AVG gravite query failed:', str(e))
+                try:
+                    print('--- Safe query (raw) ---')
+                    print(safe_q)
+                    print('--- Safe query (repr) ---')
+                    print(repr(safe_q))
+                except Exception:
+                    pass
+
         # Generate SPARQL from natural language using Gemini AI
-        sparql_query = generate_sparql_from_natural_language(user_question)
+        try:
+            sparql_query = generate_sparql_from_natural_language(user_question)
+        except Exception as e:
+            # If AI helper failed, return a clear error to the frontend
+            err_msg = f"AI generation failed: {str(e)}"
+            print(err_msg)
+            return jsonify({"success": False, "error": err_msg}), 500
+
+        # Basic sanity check: ensure the returned text looks like SPARQL
+        try:
+            sq_up = (sparql_query or '').upper()
+            if not any(tok in sq_up for tok in ['SELECT', 'ASK', 'CONSTRUCT', 'DESCRIBE', 'PREFIX', 'WITH']):
+                msg = 'AI did not return a valid SPARQL query.'
+                print(msg + f" Raw AI output: {str(sparql_query)[:300]}")
+                return jsonify({"success": False, "error": msg, "rawAI": str(sparql_query)}), 400
+        except Exception:
+            # If any unexpected error occurs during sanity check, continue and let query execution handle it
+            pass
         
-        # Execute the generated query
-        results = g.query(sparql_query)
-        result_list = []
+        # Best-effort: fix prefixed names (namespace mismatches) in AI-generated SPARQL
+        # If AI used prefix:Local that doesn't exist in the graph, search bound
+        # namespaces for a matching local-name and replace with full IRI <...>.
+        try:
+            import re
+            prefix_map = {p: ns for (p, ns) in g.namespaces()}
+
+            def _exists_in_graph(uri_str):
+                u = URIRef(uri_str)
+                return any(g.triples((u, None, None))) or any(g.triples((None, None, u))) or any(g.triples((None, u, None)))
+
+            tokens = re.findall(r"\b([A-Za-z_][A-Za-z0-9_-]*)\:([A-Za-z0-9_]+)\b", sparql_query)
+            for prefix, local in tokens:
+                if prefix not in prefix_map:
+                    continue
+                base = str(prefix_map[prefix])
+                candidate = base + local
+                if _exists_in_graph(candidate):
+                    continue
+
+                found = None
+                for (p2, ns2) in g.namespaces():
+                    uri_try = str(ns2) + local
+                    if _exists_in_graph(uri_try):
+                        found = uri_try
+                        break
+
+                if found:
+                    pattern = re.compile(r"\b" + re.escape(prefix) + r":" + re.escape(local) + r"\b")
+                    sparql_query = pattern.sub(f"<{found}>", sparql_query)
+            # Rewrite shorthand 'a PREFIX:Class' or "a <IRI>" to use subclass-aware path
+            # so that queries asking for 'a smartcity:Station' will match instances
+            # of subclasses (e.g., ont:StationBus) via rdf:type/rdfs:subClassOf*.
+            try:
+                # replace 'a prefix:LocalName' -> 'rdf:type/rdfs:subClassOf* prefix:LocalName'
+                sparql_query = re.sub(r"\ba\s+([A-Za-z_][A-Za-z0-9_-]*:[A-Za-z0-9_]+)\b",
+                                      r"rdf:type/rdfs:subClassOf* \1",
+                                      sparql_query)
+
+                # replace 'a <http://...>' -> 'rdf:type/rdfs:subClassOf* <http://...>'
+                sparql_query = re.sub(r"\ba\s+(<https?:[^>]+>)\b",
+                                      r"rdf:type/rdfs:subClassOf* \1",
+                                      sparql_query)
+            except Exception:
+                # best-effort; don't block execution if rewrite fails
+                pass
+        except Exception:
+            # ignore preprocessing failures; proceed with original query
+            pass
+
+        # Prepare initial exec_query from AI-generated SPARQL but do NOT modify
+        # the generatedQuery shown to the user. We'll apply safe rewrites for execution.
+        base_exec = sparql_query
+
+        # Helper: replace COUNT(?x) -> COUNT(DISTINCT ?x)
+        try:
+            base_exec = re.sub(r"COUNT\(\s*(?!DISTINCT\b)\?([A-Za-z0-9_]+)\s*\)",
+                               r"COUNT(DISTINCT ?\1)", base_exec, flags=re.IGNORECASE)
+        except Exception:
+            pass
+
+        # Helper: replace relative NOW()-"P30D"^^xsd:dayTimeDuration with concrete date literal (xsd:date)
+        try:
+            from datetime import datetime as _dt, timedelta as _td
+
+            def _replace_now_minus(match):
+                days = 0
+                try:
+                    days = int(match.group('days'))
+                except Exception:
+                    days = 0
+                target = (_dt.utcnow().date() - _td(days=days)).isoformat()
+                return f'"{target}"^^xsd:date'
+
+            now_pattern = re.compile(r"NOW\(\)\s*-\s*\"P(?P<days>\d+)D\"\^\^xsd:dayTimeDuration", flags=re.IGNORECASE)
+            base_exec = now_pattern.sub(_replace_now_minus, base_exec)
+        except Exception:
+            pass
+
+        # Attempt 1: execute the base_exec as-is
+        executed_query = base_exec
+        try:
+            results_obj = g.query(executed_query)
+            result_list = []
+            for row in results_obj:
+                rd = {}
+                for var in results_obj.vars:
+                    value = row[var]
+                    if value is not None:
+                        rd[str(var)] = str(value)
+                result_list.append(rd)
+        except Exception as e:
+            # If execution fails, attempt a safer fallback later
+            result_list = []
+
+        # Determine if we should attempt STR(date) fallback
+        need_fallback = False
+        try:
+            if len(result_list) == 0:
+                need_fallback = True
+        except Exception:
+            need_fallback = True
+
+        # Fallback attempt: replace date comparisons with STR(...) lexical comparisons
+        if need_fallback:
+            fallback_exec = executed_query
+            try:
+                # Replace pattern: ?var >= "YYYY-MM-DD"^^...  OR ?var >= "YYYY-MM-DD" with STR(?var) >= "YYYY-MM-DD"
+                def _date_comp_repl(m):
+                    var = m.group('var')
+                    op = m.group('op')
+                    date = m.group('date')
+                    return f"STR({var}) {op} \"{date}\""
+
+                date_pattern = re.compile(r"(?P<var>\?[A-Za-z0-9_]+)\s*(?P<op>>=|<=|>|<)\s*\"(?P<date>\d{4}-\d{2}-\d{2})(?:T[^\"]*)?\"(?:\^\^[^\s\)]+)?",
+                                          flags=re.IGNORECASE)
+                fallback_exec = date_pattern.sub(_date_comp_repl, fallback_exec)
+
+                # Execute fallback
+                executed_query = fallback_exec
+                results_obj2 = g.query(executed_query)
+                result_list2 = []
+                for row in results_obj2:
+                    rd = {}
+                    for var in results_obj2.vars:
+                        value = row[var]
+                        if value is not None:
+                            rd[str(var)] = str(value)
+                    result_list2.append(rd)
+
+                # If fallback produced results, use them
+                if len(result_list2) > 0:
+                    result_list = result_list2
+            except Exception:
+                # ignore fallback errors
+                pass
+        # result_list is already populated from the primary execution (results_obj)
+        # or from the fallback (result_list2) above. No further iteration needed here.
+
+        # Detect single-row COUNT aggregate returning zero (e.g. {"numberOfStations": "0"})
+        is_count_zero = False
+        if len(result_list) == 1 and len(result_list[0]) > 0:
+            try:
+                vals = list(result_list[0].values())
+                numeric_zero = True
+                for v in vals:
+                    try:
+                        # treat numeric string zeros as zero (int or float)
+                        if float(v) != 0.0:
+                            numeric_zero = False
+                            break
+                    except Exception:
+                        numeric_zero = False
+                        break
+                if numeric_zero:
+                    is_count_zero = True
+            except Exception:
+                is_count_zero = False
+
+        # If results are empty (or contain an empty binding), attempt a permissive rewrite
+        diagnostic_preds = None
+        if len(result_list) == 0 or (len(result_list) == 1 and list(result_list[0].keys()) == []) or is_count_zero:
+            try:
+                import re
+                # Try a permissive rewrite: replace 'rdf:type X' with 'rdf:type/rdfs:subClassOf* X'
+                rewritten = re.sub(r"rdf:type\s+(smartcity:[A-Za-z0-9_]+)", r"rdf:type/rdfs:subClassOf* \1", sparql_query)
+                if rewritten != sparql_query:
+                    results2 = g.query(rewritten)
+                    result_list2 = []
+                    for row in results2:
+                        rd = {}
+                        for var in results2.vars:
+                            value = row[var]
+                            # include zero/empty-string/falsey literals; only skip None
+                            if value is not None:
+                                rd[str(var)] = str(value)
+                        result_list2.append(rd)
+                    # if rewrite produced results, use them and mark generatedQuery for UI
+                    if len(result_list2) > 0 and not (len(result_list2) == 1 and list(result_list2[0].keys()) == []):
+                        result_list = result_list2
+                        sparql_query = rewritten
+                        # Clear the is_count_zero flag now that we have real results
+                        is_count_zero = False
+                # If still empty, run a diagnostic to list common predicates for likely entity classes
+                if len(result_list) == 0 or (len(result_list) == 1 and list(result_list[0].keys()) == []):
+                    # Try to find a smartcity:Class mentioned in the query
+                    m = re.search(r"smartcity:([A-Za-z0-9_]+)", sparql_query)
+                    if m:
+                        cls = m.group(1)
+                        diag_q = f"""
+                        PREFIX smartcity: <http://example.org/smartcity#>
+                        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+                        SELECT ?p (COUNT(?p) as ?count)
+                        WHERE {{
+                          ?s rdf:type/rdfs:subClassOf* smartcity:{cls} .
+                          ?s ?p ?o .
+                        }} GROUP BY ?p ORDER BY DESC(?count) LIMIT 20
+                        """
+                        diag_res = g.query(diag_q)
+                        diagnostic_preds = []
+                        for row in diag_res:
+                            diagnostic_preds.append({
+                                'predicate': str(row.p),
+                                'count': int(row.count) if row.count else 0
+                            })
+            except Exception:
+                # diagnostic is best-effort; ignore failures
+                diagnostic_preds = diagnostic_preds or None
         
-        for row in results:
-            result_dict = {}
-            for var in results.vars:
-                value = row[var]
-                if value:
-                    result_dict[str(var)] = str(value)
-            result_list.append(result_dict)
-        
+        # Enrich results with labels / shorten URIs for display
+        try:
+            enrich_results_with_labels(result_list)
+        except Exception:
+            pass
+
         # Get explanation of results
         explanation = explain_sparql_results(sparql_query, len(result_list))
-        
-        return jsonify({
+
+        # Build a user-friendly message explaining 0-results or summarizing the outcome
+        user_message = None
+        try:
+            if len(result_list) == 0 or (len(result_list) == 1 and list(result_list[0].keys()) == []) or is_count_zero:
+                if diagnostic_preds and len(diagnostic_preds) > 0:
+                    # Show top 5 predicate suggestions (local names if possible)
+                    top = diagnostic_preds[:5]
+                    preds = ', '.join([p['predicate'].split('#')[-1] if '#' in p['predicate'] else p['predicate'].split('/')[-1] for p in top])
+                    user_message = (
+                        "La requête n'a retourné aucun résultat. "
+                        "Suggestions : propriétés fréquentes trouvées pour l'entité détectée — " + preds + ". "
+                        "Essayez de modifier la requête en utilisant l'une de ces propriétés."
+                    )
+                else:
+                    # If we rewrote date comparisons to STR(...) let the user know
+                    try:
+                        if ('STR(' in executed_query) and ('STR(' not in sparql_query):
+                            user_message = (
+                                "Aucun résultat trouvé. Le serveur a appliqué un ajustement des comparaisons de date (STR(...)) "
+                                "pour tenir compte de formats de date hétérogènes. Vous pouvez élargir la période de recherche ou vérifier les filtres de date."
+                            )
+                        else:
+                            user_message = (
+                                "Aucun résultat — vérifiez les filtres (dates, propriétés) ou essayez une requête plus générale."
+                            )
+                    except Exception:
+                        user_message = "Aucun résultat — essayez d'élargir votre recherche ou vérifiez les propriétés utilisées."
+            else:
+                user_message = f"Requête exécutée : {len(result_list)} résultat(s) trouvé(s)."
+        except Exception:
+            user_message = None
+
+        resp = {
             "success": True,
             "question": user_question,
             "generatedQuery": sparql_query,
+            "executedQuery": executed_query,
             "results": result_list,
             "count": len(result_list),
-            "explanation": explanation
-        })
+            "explanation": explanation,
+            "userMessage": user_message
+        }
+        if diagnostic_preds:
+            resp['diagnosticPredicates'] = diagnostic_preds
+
+        return jsonify(resp)
     except Exception as e:
         return jsonify({
             "success": False,

@@ -1,5 +1,8 @@
 // EventManagement.js - Module CRUD pour Aymen Jallouli
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { validateEvent } from '../utils/validation';
+import { useToast } from './ToastProvider';
+import { useConfirm } from './ConfirmProvider';
 
 const API_URL = 'http://localhost:5001/api';
 
@@ -18,6 +21,12 @@ const EventManagement = ({ onUpdate }) => {
     date: new Date().toISOString().split('T')[0],
     imageUrl: ''
   });
+  const [errors, setErrors] = useState({});
+  const nomRef = useRef(null);
+  const graviteRef = useRef(null);
+  const dateRef = useRef(null);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   useEffect(() => {
     loadEvents();
@@ -40,7 +49,7 @@ const EventManagement = ({ onUpdate }) => {
     if (file) {
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('Image too large. Max size is 5MB');
+        toast.error('Image too large. Max size is 5MB');
         return;
       }
 
@@ -61,7 +70,23 @@ const EventManagement = ({ onUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    const { valid, errors: vErrors } = validateEvent(formData);
+    setErrors(vErrors);
+    if (!valid) {
+      // focus first invalid field: nom -> gravite -> date
+      if (vErrors.nom && nomRef.current) {
+        nomRef.current.focus();
+        nomRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else if (vErrors.gravite && graviteRef.current) {
+        graviteRef.current.focus();
+        graviteRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else if (vErrors.date && dateRef.current) {
+        dateRef.current.focus();
+        dateRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
     try {
       // Upload image first if there's a new image
       let imageUrl = formData.imageUrl || '';
@@ -111,21 +136,21 @@ const EventManagement = ({ onUpdate }) => {
       const data = await response.json();
       
       if (data.success || response.ok) {
-        alert(editingEvent ? 'Event updated!' : 'Event created!');
+        toast.success(editingEvent ? 'Event updated!' : 'Event created!');
         closeModal();
         loadEvents();
         if (onUpdate) onUpdate();
       } else {
-        alert('Error: ' + (data.error || 'Failed to save event'));
+        toast.error('Error: ' + (data.error || 'Failed to save event'));
       }
     } catch (error) {
       console.error('Error saving event:', error);
-      alert('Error saving event');
+      toast.error('Error saving event');
     }
   };
 
   const handleDelete = async (eventId) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
+    if (await confirm('Are you sure you want to delete this event?')) {
       try {
         const response = await fetch(`${API_URL}/events/${eventId}`, {
           method: 'DELETE'
@@ -134,15 +159,15 @@ const EventManagement = ({ onUpdate }) => {
         const data = await response.json();
         
         if (data.success || response.ok) {
-          alert('Event deleted!');
+          toast.success('Event deleted!');
           loadEvents();
           if (onUpdate) onUpdate();
         } else {
-          alert('Error: ' + (data.error || 'Failed to delete event'));
+          toast.error('Error: ' + (data.error || 'Failed to delete event'));
         }
       } catch (error) {
         console.error('Error deleting event:', error);
-        alert('Error deleting event');
+        toast.error('Error deleting event');
       }
     }
   };
@@ -291,16 +316,18 @@ const EventManagement = ({ onUpdate }) => {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>{editingEvent ? 'Edit Event' : 'New Event'}</h3>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <div className="form-group">
                 <label>Event Name *</label>
                 <input
                   type="text"
                   value={formData.nom}
-                  onChange={(e) => setFormData({...formData, nom: e.target.value})}
+                  ref={nomRef}
+                  onChange={(e) => { setFormData({...formData, nom: e.target.value}); setErrors({...errors, nom: null}); }}
                   placeholder="Ex: Accident Avenue Bourguiba"
                   required
                 />
+                {errors.nom && <div className="field-error">{errors.nom}</div>}
               </div>
 
               <div className="form-group">
@@ -361,9 +388,11 @@ const EventManagement = ({ onUpdate }) => {
                   min="1"
                   max="5"
                   value={formData.gravite}
-                  onChange={(e) => setFormData({...formData, gravite: parseInt(e.target.value)})}
+                  ref={graviteRef}
+                  onChange={(e) => { setFormData({...formData, gravite: parseInt(e.target.value)}); setErrors({...errors, gravite: null}); }}
                   style={{width: '100%'}}
                 />
+                {errors.gravite && <div className="field-error">{errors.gravite}</div>}
                 <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#666'}}>
                   <span>1 - Low</span>
                   <span>3 - Medium</span>
@@ -376,8 +405,10 @@ const EventManagement = ({ onUpdate }) => {
                 <input
                   type="date"
                   value={formData.date}
-                  onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  ref={dateRef}
+                  onChange={(e) => { setFormData({...formData, date: e.target.value}); setErrors({...errors, date: null}); }}
                 />
+                {errors.date && <div className="field-error">{errors.date}</div>}
               </div>
 
               <div className="form-actions">
@@ -392,17 +423,6 @@ const EventManagement = ({ onUpdate }) => {
           </div>
         </div>
       )}
-
-      <div style={{marginTop: '30px', padding: '20px', background: '#f8f9fa', borderRadius: '10px'}}>
-        <h4 style={{marginBottom: '10px', color: '#667eea'}}>⚠️ Events Module</h4>
-        <p style={{color: '#666'}}>
-          <strong>CRUD Features:</strong><br/>
-          ✅ Create - Report new traffic events<br/>
-          ✅ Read - View all events<br/>
-          ✅ Update - Edit event information<br/>
-          ✅ Delete - Remove resolved events
-        </p>
-      </div>
     </div>
   );
 };

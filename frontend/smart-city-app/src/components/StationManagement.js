@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { validateStation } from '../utils/validation';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './StationManagement.css';
+import { useToast } from './ToastProvider';
+import { useConfirm } from './ConfirmProvider';
 
 const API_URL = 'http://localhost:5001/api';
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN;
@@ -26,12 +29,16 @@ function StationManagement() {
     latitude: '',
     longitude: ''
   });
+  const [errors, setErrors] = useState({});
   const [editingStation, setEditingStation] = useState(null);
   const [tempMarker, setTempMarker] = useState(null); // Temporary marker for new station location
   const [aiRecommendations, setAiRecommendations] = useState([]);
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
   const [recommendationMarkers, setRecommendationMarkers] = useState([]);
+
+  const toast = useToast();
+  const confirm = useConfirm();
 
   // Function to get emoji for station type
   const getStationEmoji = (type) => {
@@ -51,6 +58,10 @@ function StationManagement() {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markers = useRef([]);
+  // refs for focusing invalid fields
+  const nomRef = useRef(null);
+  const latRef = useRef(null);
+  const lngRef = useRef(null);
 
   console.log('📊 [STATION COMPONENT] Current state:', {
     viewMode,
@@ -286,6 +297,22 @@ function StationManagement() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const { valid, errors: vErrors } = validateStation(formData);
+    setErrors(vErrors);
+    if (!valid) {
+      // focus the first invalid field (prefer nom, then latitude, then longitude)
+      if (vErrors.nom && nomRef.current) {
+        nomRef.current.focus();
+        nomRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else if (vErrors.latitude && latRef.current) {
+        latRef.current.focus();
+        latRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else if (vErrors.longitude && lngRef.current) {
+        lngRef.current.focus();
+        lngRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
     try {
       const url = editingStation
         ? `${API_URL}/stations/${formData.id}`
@@ -310,19 +337,20 @@ function StationManagement() {
       setEditingStation(null);
       setFormData({ id: '', nom: '', type: 'StationMétro', latitude: '', longitude: '' });
     } catch (err) {
-      alert('Error: ' + err.message);
+      toast.error('Error: ' + err.message);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this station?')) return;
-    
+    const ok = await confirm('Delete this station?');
+    if (!ok) return;
+
     try {
       const response = await fetch(`${API_URL}/stations/${id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete');
       await loadStations();
     } catch (err) {
-      alert('Error: ' + err.message);
+      toast.error('Error: ' + err.message);
     }
   };
 
@@ -426,11 +454,11 @@ function StationManagement() {
           });
         }
       } else {
-        alert('Failed to get AI recommendations: ' + (data.error || 'Unknown error'));
+        toast.error('Failed to get AI recommendations: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error getting AI recommendations:', error);
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     } finally {
       setLoadingAI(false);
     }
@@ -541,18 +569,20 @@ function StationManagement() {
               <h2>{editingStation ? '✏️ Edit Station' : '➕ Add New Station'}</h2>
               <button className="close-btn" onClick={handleCloseForm}>×</button>
             </div>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <div className="form-group">
                 <label>🏷️ Station Name*</label>
                 <input
                   type="text"
                   name="nom"
                   value={formData.nom}
-                  onChange={(e) => setFormData({...formData, nom: e.target.value})}
+                  ref={nomRef}
+                  onChange={(e) => { setFormData({...formData, nom: e.target.value}); setErrors({...errors, nom: null}); }}
                   required
                   placeholder="e.g., Tunis Marine, Place Barcelone"
                   autoFocus
                 />
+                {errors.nom && <div className="field-error">{errors.nom}</div>}
               </div>
               <div className="form-group">
                 <label>Station Type*</label>
@@ -578,11 +608,13 @@ function StationManagement() {
                     type="number"
                     step="0.000001"
                     value={formData.latitude}
-                    onChange={(e) => setFormData({...formData, latitude: e.target.value})}
+                    ref={latRef}
+                    onChange={(e) => { setFormData({...formData, latitude: e.target.value}); setErrors({...errors, latitude: null}); }}
                     required
                     placeholder="36.8065"
                     className="coordinate-input"
                   />
+                  {errors.latitude && <div className="field-error">{errors.latitude}</div>}
                 </div>
                 <div className="form-group">
                   <label>📍 Longitude*</label>
@@ -590,11 +622,13 @@ function StationManagement() {
                     type="number"
                     step="0.000001"
                     value={formData.longitude}
-                    onChange={(e) => setFormData({...formData, longitude: e.target.value})}
+                    ref={lngRef}
+                    onChange={(e) => { setFormData({...formData, longitude: e.target.value}); setErrors({...errors, longitude: null}); }}
                     required
                     placeholder="10.1815"
                     className="coordinate-input"
                   />
+                  {errors.longitude && <div className="field-error">{errors.longitude}</div>}
                 </div>
               </div>
               <div className="coordinate-hint">

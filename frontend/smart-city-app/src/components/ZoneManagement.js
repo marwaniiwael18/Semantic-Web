@@ -1,5 +1,8 @@
 // ZoneManagement.js - Module CRUD pour Nassim Khaldi
 import React, { useState, useEffect } from 'react';
+import { validateZone } from '../utils/validation';
+import { useConfirm } from './ConfirmProvider';
+import { useToast } from './ToastProvider';
 
 const API_URL = 'http://localhost:5001/api';
 
@@ -15,6 +18,9 @@ const ZoneManagement = ({ onUpdate }) => {
     population: '',
     description: ''
   });
+  const [errors, setErrors] = useState({});
+  const toast = useToast();
+  const confirm = useConfirm();
 
   useEffect(() => {
     loadZones();
@@ -34,6 +40,12 @@ const ZoneManagement = ({ onUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const { valid, errors: vErrors } = validateZone(formData);
+    setErrors(vErrors);
+    if (!valid) {
+      toast.error('Veuillez corriger les erreurs du formulaire');
+      return;
+    }
     
     try {
       const endpoint = editingZone 
@@ -53,21 +65,21 @@ const ZoneManagement = ({ onUpdate }) => {
       const data = await response.json();
       
       if (data.success || response.ok) {
-        alert(editingZone ? 'Zone updated!' : 'Zone created!');
+        toast.success(editingZone ? 'Zone updated!' : 'Zone created!');
         closeModal();
         loadZones();
         if (onUpdate) onUpdate();
       } else {
-        alert('Error: ' + (data.error || 'Failed to save zone'));
+        toast.error('Error: ' + (data.error || 'Failed to save zone'));
       }
     } catch (error) {
       console.error('Error saving zone:', error);
-      alert('Error saving zone');
+      toast.error('Error saving zone');
     }
   };
 
   const handleDelete = async (zoneId) => {
-    if (window.confirm('Are you sure you want to delete this zone?')) {
+    if (await confirm('Are you sure you want to delete this zone?')) {
       try {
         const response = await fetch(`${API_URL}/zones/${zoneId}`, {
           method: 'DELETE'
@@ -76,15 +88,15 @@ const ZoneManagement = ({ onUpdate }) => {
         const data = await response.json();
         
         if (data.success || response.ok) {
-          alert('Zone deleted!');
+          toast.success('Zone deleted!');
           loadZones();
           if (onUpdate) onUpdate();
         } else {
-          alert('Error: ' + (data.error || 'Failed to delete zone'));
+          toast.error('Error: ' + (data.error || 'Failed to delete zone'));
         }
       } catch (error) {
         console.error('Error deleting zone:', error);
-        alert('Error deleting zone');
+        toast.error('Error deleting zone');
       }
     }
   };
@@ -207,16 +219,17 @@ const ZoneManagement = ({ onUpdate }) => {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>{editingZone ? 'Edit Zone' : 'New Urban Zone'}</h3>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <div className="form-group">
                 <label>Zone Name *</label>
                 <input
                   type="text"
                   value={formData.nom}
-                  onChange={(e) => setFormData({...formData, nom: e.target.value})}
+                  onChange={(e) => { setFormData({...formData, nom: e.target.value}); setErrors({...errors, nom: null}); }}
                   placeholder="Ex: Downtown Tunis"
                   required
                 />
+                {errors.nom && <div className="field-error">{errors.nom}</div>}
               </div>
 
               <div className="form-group">
@@ -240,9 +253,10 @@ const ZoneManagement = ({ onUpdate }) => {
                   type="number"
                   step="0.01"
                   value={formData.superficie}
-                  onChange={(e) => setFormData({...formData, superficie: e.target.value})}
+                  onChange={(e) => { setFormData({...formData, superficie: e.target.value}); setErrors({...errors, superficie: null}); }}
                   placeholder="Ex: 25.5"
                 />
+                {errors.superficie && <div className="field-error">{errors.superficie}</div>}
               </div>
 
               <div className="form-group">
@@ -250,9 +264,10 @@ const ZoneManagement = ({ onUpdate }) => {
                 <input
                   type="number"
                   value={formData.population}
-                  onChange={(e) => setFormData({...formData, population: e.target.value})}
+                  onChange={(e) => { setFormData({...formData, population: e.target.value}); setErrors({...errors, population: null}); }}
                   placeholder="Ex: 50000"
                 />
+                {errors.population && <div className="field-error">{errors.population}</div>}
               </div>
 
               <div className="form-group">
@@ -277,17 +292,6 @@ const ZoneManagement = ({ onUpdate }) => {
           </div>
         </div>
       )}
-
-      <div style={{marginTop: '30px', padding: '20px', background: '#f8f9fa', borderRadius: '10px'}}>
-        <h4 style={{marginBottom: '10px', color: '#667eea'}}>🏘️ Zones Module</h4>
-        <p style={{color: '#666'}}>
-          <strong>CRUD Features:</strong><br/>
-          ✅ Create - Add new urban zones<br/>
-          ✅ Read - View all zones<br/>
-          ✅ Update - Edit zone information<br/>
-          ✅ Delete - Remove zones
-        </p>
-      </div>
     </div>
   );
 };

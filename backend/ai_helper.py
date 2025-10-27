@@ -63,17 +63,71 @@ Generate a SPARQL query that answers this question. Return ONLY the SPARQL query
     
     try:
         response = model.generate_content(prompt)
-        sparql_query = response.text.strip()
-        
+
+        # The Gemini client may return different shapes depending on version.
+        # Try several known extraction strategies in order of likelihood.
+        sparql_query = None
+
+        # 1) If response has a 'text' attribute (some wrappers provide it)
+        if hasattr(response, 'text') and isinstance(response.text, str):
+            sparql_query = response.text.strip()
+
+        # 2) If response behaves like a dict with 'candidates' (REST-like)
+        if not sparql_query and isinstance(response, dict):
+            # candidates -> content -> parts -> text (used elsewhere in the repo)
+            try:
+                cand = response.get('candidates') or response.get('output') or []
+                if len(cand) > 0:
+                    # try a couple of nested patterns
+                    first = cand[0]
+                    # pattern: {'content': {'parts': [{'text': '...'}]}}
+                    txt = None
+                    if isinstance(first, dict):
+                        if 'content' in first and isinstance(first['content'], dict):
+                            parts = first['content'].get('parts') or []
+                            if parts and isinstance(parts[0], dict) and 'text' in parts[0]:
+                                txt = parts[0]['text']
+                        # pattern: {'content': [{'type':'output_text','text':'...'}]}
+                        if not txt and 'content' in first and isinstance(first['content'], list):
+                            for item in first['content']:
+                                if isinstance(item, dict) and 'text' in item:
+                                    txt = item['text']; break
+                        # pattern: {'text': '...'} directly
+                        if not txt and 'text' in first and isinstance(first['text'], str):
+                            txt = first['text']
+                        if txt:
+                            sparql_query = txt.strip()
+            except Exception:
+                pass
+
+        # 3) Fallback: if response is str-like
+        if not sparql_query and isinstance(response, str):
+            sparql_query = response.strip()
+
+        if not sparql_query:
+            raise ValueError('No textual content found in AI response')
+
         # Clean up the response (remove markdown code blocks if present)
-        if sparql_query.startswith('```sparql'):
-            sparql_query = sparql_query.replace('```sparql', '').replace('```', '').strip()
-        elif sparql_query.startswith('```'):
-            sparql_query = sparql_query.replace('```', '').strip()
-        
+        # Keep only the first code block or first SPARQL-looking segment.
+        import re
+        # Extract first ```...``` block if present
+        m = re.search(r"```(?:sparql)?\s*([\s\S]*?)```", sparql_query, flags=re.IGNORECASE)
+        if m:
+            sparql_query = m.group(1).strip()
+        else:
+            # If no code block, try to heuristically find 'SELECT' or 'PREFIX' start
+            idx = None
+            for token in ['PREFIX', 'SELECT', 'ASK', 'CONSTRUCT', 'DESCRIBE', 'WITH']:
+                i = sparql_query.upper().find(token)
+                if i != -1 and (idx is None or i < idx):
+                    idx = i
+            if idx is not None:
+                sparql_query = sparql_query[idx:]
+
         return sparql_query
     except Exception as e:
-        return f"Error generating SPARQL: {str(e)}"
+        # Raise instead of returning an error string so caller can decide handling
+        raise RuntimeError(f"Error generating SPARQL: {str(e)}")
 
 
 def get_ai_suggestions(context):
